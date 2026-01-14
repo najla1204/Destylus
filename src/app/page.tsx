@@ -23,7 +23,7 @@ export default function LoginPage() {
       const credentials = {
         engineer: { user: "engineer", pass: "engineer", role: "Engineer" },
         pm: { user: "pro1", pass: "pro1", role: "Project Manager" },
-        hr: { user: "hr1", pass: "hr1", role: "HR" },
+        hr: { user: "HR1", pass: "HR1", role: "HR Manager" },
       };
 
       const validEngineer =
@@ -32,10 +32,27 @@ export default function LoginPage() {
       const validPM =
         username === credentials.pm.user && password === credentials.pm.pass;
       const validHR =
-        username === credentials.hr.user && password === credentials.hr.pass;
+        (username === credentials.hr.user || username === "hr1") && (password === credentials.hr.pass || password === "hr1");
 
       if (validEngineer || validPM || validHR) {
         // In a real app, you'd set a cookie or token here
+        let role = "";
+        let name = "";
+
+        if (validEngineer) {
+          role = credentials.engineer.role;
+          name = "Engineer User";
+        } else if (validPM) {
+          role = credentials.pm.role;
+          name = "Project Manager";
+        } else if (validHR) {
+          role = credentials.hr.role;
+          name = "HR Manager";
+        }
+
+        localStorage.setItem("userRole", role);
+        localStorage.setItem("userName", name);
+
         router.push("/dashboard");
       } else {
         setError("Invalid credentials. Please try again.");

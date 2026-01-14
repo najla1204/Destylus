@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User, Mail, Phone, MapPin, Briefcase, Hash, Calendar, Edit2, Save, X } from "lucide-react";
 
 interface UserProfile {
@@ -14,7 +14,7 @@ interface UserProfile {
     joiningDate: string;
 }
 
-const initialProfile: UserProfile = {
+const engineerProfile: UserProfile = {
     name: "Alex Morgan",
     employeeId: "ENG-2023-042",
     role: "Senior Site Engineer",
@@ -25,10 +25,32 @@ const initialProfile: UserProfile = {
     joiningDate: "2023-01-10",
 };
 
+const pmProfile: UserProfile = {
+    name: "Sarah Connor",
+    employeeId: "PM-2022-001",
+    role: "Project Manager",
+    phone: "+91 98765 12345",
+    email: "sarah.connor@destylus.com",
+    address: "Skyline Tower, Executive Suite 404, Business District",
+    dob: "1985-08-20",
+    joiningDate: "2022-03-15",
+};
+
 export default function ProfilePage() {
     const [isEditing, setIsEditing] = useState(false);
-    const [profile, setProfile] = useState<UserProfile>(initialProfile);
-    const [formData, setFormData] = useState<UserProfile>(initialProfile);
+    const [profile, setProfile] = useState<UserProfile>(engineerProfile);
+    const [formData, setFormData] = useState<UserProfile>(engineerProfile);
+
+    useEffect(() => {
+        const role = localStorage.getItem("userRole");
+        if (role === "Project Manager") {
+            setProfile(pmProfile);
+            setFormData(pmProfile);
+        } else {
+            setProfile(engineerProfile);
+            setFormData(engineerProfile);
+        }
+    }, []);
 
     const handleInputChange = (field: keyof UserProfile, value: string) => {
         setFormData((prev) => ({ ...prev, [field]: value }));

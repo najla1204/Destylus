@@ -1,148 +1,206 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, Calendar, FileText, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Calendar, FileText, CheckCircle, Clock, XCircle, AlertCircle, User, Briefcase } from "lucide-react";
 
-interface LeaveRequest {
-    id: string;
-    date: string;
-    type: "Sick Leave" | "Casual Leave" | "Emergency";
-    reason: string;
-    status: "Pending" | "Approved" | "Rejected";
-}
-
-const initialRequests: LeaveRequest[] = [
-    { id: "1", date: "2024-03-10", type: "Casual Leave", reason: "Personal work", status: "Approved" },
+// Mock Data for HR View
+const MOCK_LEAVE_REQUESTS = [
+    { id: 1, name: "Robert Fox", role: "Project Manager", type: "Sick Leave", from: "2026-01-20", to: "2026-01-22", reason: "Viral Fever", status: "Pending" },
+    { id: 2, name: "John Doe", role: "Site Engineer", type: "Casual Leave", from: "2026-01-18", to: "2026-01-19", reason: "Family Function", status: "Pending" },
+    { id: 3, name: "Sarah Connor", role: "Safety Officer", type: "Emergency", from: "2026-01-15", to: "2026-01-15", reason: "Medical Emergency", status: "Approved" },
 ];
 
-export default function LeaveRequestPage() {
-    const [requests, setRequests] = useState<LeaveRequest[]>(initialRequests);
-    const [showForm, setShowForm] = useState(false);
+export default function LeavePage() {
+    const [userRole, setUserRole] = useState("");
+    const [activeTab, setActiveTab] = useState<"pending" | "history">("pending");
+    const [requests, setRequests] = useState(MOCK_LEAVE_REQUESTS);
 
-    // Form
-    const [date, setDate] = useState("");
-    const [type, setType] = useState<LeaveRequest["type"]>("Casual Leave");
+    // Existing "Apply" State
+    const [leaveType, setLeaveType] = useState("Casual Leave");
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
     const [reason, setReason] = useState("");
+    const [isSubmitted, setIsSubmitted] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        const newRequest: LeaveRequest = {
-            id: Date.now().toString(),
-            date,
-            type,
-            reason,
-            status: "Pending"
-        };
-        setRequests([newRequest, ...requests]);
-        setShowForm(false);
-        setDate("");
-        setReason("");
+    useEffect(() => {
+        const role = localStorage.getItem("userRole") || "Engineer";
+        setUserRole(role);
+    }, []);
+
+    const handleAction = (id: number, status: string) => {
+        setRequests(prev => prev.map(req => req.id === id ? { ...req, status } : req));
     };
 
-    return (
-        <div className="flex flex-col gap-6 max-w-5xl mx-auto">
-            {/* Header */}
-            <div className="flex flex-col gap-4 border-b border-gray-700 pb-6">
-                <Link
-                    href="/attendance"
-                    className="flex items-center gap-2 text-sm text-muted hover:text-primary transition-colors w-fit"
-                >
-                    <ArrowLeft size={16} />
-                    Back to Attendance
-                </Link>
-                <div className="flex items-end justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-foreground">Leave Requests</h1>
-                        <p className="text-muted">Submit and track your leave applications.</p>
-                    </div>
-                </div>
-            </div>
+    const handleSubmitApplication = (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitted(true);
+    };
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Form Section */}
-                <div className="md:col-span-1">
-                    <div className="bg-panel border border-gray-700 rounded-xl p-6 sticky top-6">
-                        <h2 className="text-xl font-bold text-foreground mb-4">New Request</h2>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="text-sm font-medium text-muted block mb-2">Select Date</label>
-                                <input
-                                    type="date"
-                                    required
-                                    value={date}
-                                    onChange={(e) => setDate(e.target.value)}
-                                    className="w-full bg-surface p-3 rounded-lg border border-gray-700 focus:border-primary focus:outline-none text-foreground"
-                                />
-                            </div>
+    // --- HR VIEW ---
+    if (userRole === "HR Manager") {
+        const displayedRequests = activeTab === "pending"
+            ? requests.filter(r => r.status === "Pending")
+            : requests.filter(r => r.status !== "Pending");
 
-                            <div>
-                                <label className="text-sm font-medium text-muted block mb-2">Leave Type</label>
-                                <select
-                                    value={type}
-                                    onChange={(e) => setType(e.target.value as LeaveRequest["type"])}
-                                    className="w-full bg-surface p-3 rounded-lg border border-gray-700 focus:border-primary focus:outline-none text-foreground"
-                                >
-                                    <option>Casual Leave</option>
-                                    <option>Sick Leave</option>
-                                    <option>Emergency</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="text-sm font-medium text-muted block mb-2">Reason</label>
-                                <textarea
-                                    required
-                                    value={reason}
-                                    onChange={(e) => setReason(e.target.value)}
-                                    placeholder="Brief reason for leave..."
-                                    className="w-full bg-surface p-3 rounded-lg border border-gray-700 focus:border-primary focus:outline-none text-foreground min-h-[100px]"
-                                />
-                            </div>
-
-                            <button
-                                type="submit"
-                                className="w-full py-3 bg-primary text-black font-bold rounded-lg hover:bg-primary-hover transition-colors"
-                            >
-                                Submit Request
-                            </button>
-                        </form>
-                    </div>
+        return (
+            <div className="space-y-6">
+                <div>
+                    <h1 className="text-2xl font-bold text-foreground">Leave Requests</h1>
+                    <p className="text-muted">Manage and verify leave applications.</p>
                 </div>
 
-                {/* List Section */}
-                <div className="md:col-span-2 space-y-4">
-                    <h2 className="text-xl font-bold text-foreground mb-4">Request History</h2>
-                    {requests.length === 0 ? (
-                        <div className="text-center py-12 text-muted border border-dashed border-gray-700 rounded-xl">
-                            No leave requests found.
+                {/* Tabs */}
+                <div className="flex border-b border-gray-700">
+                    <button
+                        onClick={() => setActiveTab("pending")}
+                        className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 ${activeTab === "pending" ? "border-primary text-primary" : "border-transparent text-muted hover:text-foreground"}`}
+                    >
+                        Pending Requests <span className="ml-2 rounded-full bg-primary/20 text-primary px-2 py-0.5 text-xs">{requests.filter(r => r.status === "Pending").length}</span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("history")}
+                        className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 ${activeTab === "history" ? "border-primary text-primary" : "border-transparent text-muted hover:text-foreground"}`}
+                    >
+                        History
+                    </button>
+                </div>
+
+                {/* List */}
+                <div className="grid gap-4">
+                    {displayedRequests.length === 0 ? (
+                        <div className="text-center py-12 text-muted bg-panel rounded-xl border border-gray-700">
+                            <CheckCircle size={48} className="mx-auto mb-4 text-green-500/50" />
+                            <p>No requests found in this category.</p>
                         </div>
                     ) : (
-                        requests.map(req => (
-                            <div key={req.id} className="bg-panel border border-gray-700 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-gray-500 transition-colors">
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className="font-bold text-lg text-foreground">{req.date}</span>
-                                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-800 text-muted border border-gray-700">
-                                            {req.type}
-                                        </span>
+                        displayedRequests.map((req) => (
+                            <div key={req.id} className="bg-panel border border-gray-700 rounded-xl p-6 flex flex-col md:flex-row gap-6 md:items-center justify-between">
+                                <div className="flex items-start gap-4">
+                                    <div className="h-12 w-12 rounded-full bg-surface border border-gray-600 flex items-center justify-center text-lg font-bold text-foreground">
+                                        {req.name.charAt(0)}
                                     </div>
-                                    <p className="text-sm text-muted">{req.reason}</p>
+                                    <div>
+                                        <h3 className="font-bold text-foreground">{req.name}</h3>
+                                        <p className="text-sm text-muted flex items-center gap-2">
+                                            {req.role} <span className="w-1 h-1 rounded-full bg-gray-500"></span> {req.type}
+                                        </p>
+                                        <div className="mt-2 flex flex-wrap gap-4 text-sm">
+                                            <div className="flex items-center gap-1 text-foreground bg-surface px-2 py-1 rounded">
+                                                <Calendar size={14} className="text-primary" />
+                                                <span>{req.from}</span> <span className="text-muted">to</span> <span>{req.to}</span>
+                                            </div>
+                                            <div className="text-muted italic">"{req.reason}"</div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className={`px-3 py-1 rounded-lg text-sm font-bold border flex items-center gap-2
-                                    ${req.status === 'Approved' ? 'bg-success/10 text-success border-success/20' :
-                                        req.status === 'Pending' ? 'bg-warning/10 text-warning border-warning/20' :
-                                            'bg-red-500/10 text-red-500 border-red-500/20'}`
-                                }>
-                                    {req.status === 'Approved' ? <CheckCircle size={14} /> :
-                                        req.status === 'Pending' ? <Clock size={14} /> : <AlertCircle size={14} />}
-                                    {req.status}
-                                </div>
+
+                                {req.status === "Pending" ? (
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={() => handleAction(req.id, "Rejected")}
+                                            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors"
+                                        >
+                                            <XCircle size={18} /> Reject
+                                        </button>
+                                        <button
+                                            onClick={() => handleAction(req.id, "Approved")}
+                                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-500 transition-colors shadow-lg shadow-green-900/20"
+                                        >
+                                            <CheckCircle size={18} /> Approve
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className={`px-4 py-2 rounded-lg text-sm font-medium border ${req.status === 'Approved' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                        }`}>
+                                        {req.status}
+                                    </div>
+                                )}
                             </div>
                         ))
                     )}
                 </div>
             </div>
+        );
+    }
+
+    // --- ENGINEER / PM VIEW (Apply) ---
+    if (isSubmitted) {
+        return (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="h-20 w-20 bg-green-500/10 rounded-full flex items-center justify-center text-green-500 mb-6">
+                    <CheckCircle size={40} />
+                </div>
+                <h1 className="text-2xl font-bold text-foreground">Application Submitted</h1>
+                <p className="text-muted mt-2">Your leave request has been sent for approval.</p>
+                <button onClick={() => setIsSubmitted(false)} className="mt-8 text-primary hover:underline">Submit Another Request</button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="max-w-2xl mx-auto space-y-6">
+            <div>
+                <h1 className="text-2xl font-bold text-foreground">Apply for Leave</h1>
+                <p className="text-muted">Submit your leave application for approval.</p>
+            </div>
+
+            <form onSubmit={handleSubmitApplication} className="space-y-6 bg-panel border border-gray-700 rounded-xl p-6">
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted">Leave Type</label>
+                    <select
+                        className="w-full bg-surface border border-gray-700 rounded-lg p-3 text-foreground focus:border-primary focus:outline-none"
+                        value={leaveType}
+                        onChange={(e) => setLeaveType(e.target.value)}
+                    >
+                        <option>Casual Leave</option>
+                        <option>Sick Leave</option>
+                        <option>Emergency Leave</option>
+                    </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-muted">From Date</label>
+                        <input
+                            type="date"
+                            required
+                            className="w-full bg-surface border border-gray-700 rounded-lg p-3 text-foreground focus:border-primary focus:outline-none"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-muted">To Date</label>
+                        <input
+                            type="date"
+                            required
+                            className="w-full bg-surface border border-gray-700 rounded-lg p-3 text-foreground focus:border-primary focus:outline-none"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                        />
+                    </div>
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted">Reason</label>
+                    <textarea
+                        required
+                        className="w-full bg-surface border border-gray-700 rounded-lg p-3 text-foreground focus:border-primary focus:outline-none h-32 resize-none"
+                        placeholder="Please describe the reason for your leave..."
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                    ></textarea>
+                </div>
+
+                <div className="flex items-center gap-2 text-sm text-yellow-500/80 bg-yellow-500/10 p-3 rounded-lg border border-yellow-500/20">
+                    <AlertCircle size={16} />
+                    <span>Your PM/HR will review the application.</span>
+                </div>
+
+                <button type="submit" className="w-full bg-primary text-black font-bold py-3 rounded-lg hover:bg-primary/90 transition-colors">
+                    Submit Application
+                </button>
+            </form>
         </div>
     );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Briefcase, Package, Users, Settings, HardHat, ClipboardCheck, LogOut, MapPin, FileText } from "lucide-react";
 
@@ -8,6 +9,8 @@ const menuItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard }, // Updated href to match new path
   { name: "Sites", href: "/sites", icon: MapPin },
   { name: "Projects", href: "/projects", icon: Briefcase },
+  { name: "Project Managers", href: "/project-managers", icon: Briefcase },
+  { name: "Engineers", href: "/engineers", icon: Users },
   { name: "Attendance", href: "/attendance", icon: ClipboardCheck },
   { name: "Leave", href: "/leave", icon: FileText },
   { name: "Settings", href: "/settings/profile", icon: Settings },
@@ -16,6 +19,27 @@ const menuItems = [
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [userInfo, setUserInfo] = useState({ name: "User", role: "Guest" });
+
+  useEffect(() => {
+    // Ensure this runs only on the client
+    const name = localStorage.getItem("userName") || "Admin User";
+    const role = localStorage.getItem("userRole") || "Site Manager";
+    setUserInfo({ name, role });
+  }, []);
+
+  // Define role-based access for menu items
+  const getFilteredMenuItems = () => {
+    if (userInfo.role === "Project Manager") {
+      // Project Manager only needs Dashboard (where they manage sites) and Settings + Engineers
+      return menuItems.filter(item => ["Dashboard", "Engineers", "Settings"].includes(item.name));
+    }
+    if (userInfo.role === "HR Manager") {
+      return menuItems.filter(item => ["Dashboard", "Sites", "Project Managers", "Engineers", "Attendance", "Leave", "Settings"].includes(item.name));
+    }
+    // Default (Engineer / Admin) sees everything for now
+    return menuItems;
+  };
 
   return (
     <aside className="fixed left-0 top-0 z-50 flex h-screen w-[260px] flex-col border-r border-gray-700 bg-panel transition-transform duration-300">
@@ -25,7 +49,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex flex-1 flex-col gap-2 p-4">
-        {menuItems.map((item) => {
+        {getFilteredMenuItems().map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
@@ -46,15 +70,18 @@ export default function Sidebar() {
       <div className="border-t border-gray-700 p-4">
         <div className="flex items-center gap-3 rounded-lg bg-surface p-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-black">
-            A
+            {userInfo.name.charAt(0)}
           </div>
           <div className="flex flex-col">
-            <p className="text-sm font-semibold text-foreground">Admin User</p>
-            <p className="text-xs text-muted">Site Manager</p>
+            <p className="text-sm font-semibold text-foreground">{userInfo.name}</p>
+            <p className="text-xs text-muted">{userInfo.role}</p>
           </div>
         </div>
         <button
-          onClick={() => router.push("/")}
+          onClick={() => {
+            router.push("/");
+            localStorage.clear();
+          }}
           className="mt-2 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium text-red-400 transition-colors hover:bg-gray-800 hover:text-red-300"
         >
           <LogOut size={18} />

@@ -1,27 +1,421 @@
-import Link from "next/link";
-import { ArrowLeft, MapPin, Users, Package, Calendar, Activity, HardHat } from "lucide-react";
+"use client";
 
-interface PageProps {
-    params: Promise<{ id: string }>;
+import Link from "next/link";
+import { ArrowLeft, MapPin, Users, Package, Calendar, Activity, HardHat, DollarSign, CheckCircle, Edit, Save, X, FileText, AlertTriangle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+
+// Placeholder data type for daily report
+interface DailyReport {
+    id: string;
+    date: string;
+    engineerName: string;
+    engineerAttendance: "Present" | "Absent" | "Half Day";
+    laborCost: number;
+    materialIn: string[];
+    materialOut: string[];
+    extraMaterials: string[];
+    pettyCashSpend: number;
+    pettyCashDetails: string;
+    status: "Pending" | "Approved";
 }
 
-export default async function SiteDetailsPage({ params }: PageProps) {
-    const { id } = await params;
+export default function SiteDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+    const [id, setId] = useState<string>("");
+    const [userRole, setUserRole] = useState<string>("");
+    const [isEditing, setIsEditing] = useState(false);
 
-    // In a real app, fetch data based on ID. Here we mock it.
+    // Mock Site Data
     const site = {
         id: id,
         name: "Skyline Tower A",
         location: "Downtown District",
         status: "Active",
-        manager: "John Doe", // Site Engineer
-        projectEngineer: "Alex Morgan", // Project Engineer (Default)
+        manager: "John Doe",
+        projectEngineer: "Alex Morgan",
         description: "A 45-story residential tower with luxury amenities under construction.",
         progress: 35,
         startDate: "2024-01-01",
         completionDate: "2025-12-31",
     };
 
+    // Mock Daily Report Data
+    const [report, setReport] = useState<DailyReport>({
+        id: "rep_001",
+        date: new Date().toLocaleDateString(),
+        engineerName: "John Doe",
+        engineerAttendance: "Present",
+        laborCost: 15000,
+        materialIn: ["Cement: 50 Bags", "Steel: 2 Tons"],
+        materialOut: ["Cement: 12 Bags"],
+        extraMaterials: ["Gloves: 10 pairs"],
+        pettyCashSpend: 2500,
+        pettyCashDetails: "Fuel for generator",
+        status: "Pending"
+    });
+
+    useEffect(() => {
+        const resolveParams = async () => {
+            const resolvedParams = await params;
+            setId(resolvedParams.id);
+        };
+        resolveParams();
+
+        const role = localStorage.getItem("userRole") || "";
+        setUserRole(role);
+    }, [params]);
+
+    const handleSave = () => {
+        setIsEditing(false);
+        // In real app, API call to update report
+    };
+
+    const handleApprove = () => {
+        if (confirm("Are you sure you want to approve this daily report?")) {
+            setReport({ ...report, status: "Approved" });
+        }
+    };
+
+    const totalCost = report.laborCost + report.pettyCashSpend; // Simplified logic
+
+    // --- HR MANAGER VIEW ---
+    if (userRole === "HR Manager") {
+        return (
+            <div className="space-y-6">
+                {/* Breadcrumb & Header */}
+                <div>
+                    <div className="flex items-center gap-2 text-sm text-muted">
+                        <Link href="/dashboard" className="hover:text-primary transition-colors">Dashboard</Link>
+                        <span>/</span>
+                        <span>{site.name}</span>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between">
+                        <h1 className="text-2xl font-bold text-foreground">{site.name} <span className="text-sm font-normal text-muted bg-gray-800 px-2 py-1 rounded-md ml-2">{site.status}</span></h1>
+                        <Link
+                            href={`/sites/${id}/reports`}
+                            className="flex items-center gap-2 rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-foreground hover:bg-gray-800 transition-colors"
+                        >
+                            <FileText size={18} />
+                            Generate Report
+                        </Link>
+                    </div>
+                </div>
+
+                {/* 1. KEY PERSONNEL CARD */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="rounded-xl border border-gray-700 bg-panel p-6">
+                        <h2 className="mb-4 text-sm font-semibold text-muted uppercase tracking-wider">Project Leadership</h2>
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-4">
+                                <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500"><Users size={20} /></div>
+                                <div>
+                                    <p className="text-sm font-medium text-foreground">{site.manager}</p>
+                                    <p className="text-xs text-muted">Project Manager</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="h-10 w-10 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500"><HardHat size={20} /></div>
+                                <div>
+                                    <p className="text-sm font-medium text-foreground">{site.projectEngineer}</p>
+                                    <p className="text-xs text-muted">Site Engineer</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 2. FINANCIAL SUMMARY */}
+                    <div className="rounded-xl border border-gray-700 bg-panel p-6">
+                        <h2 className="mb-4 text-sm font-semibold text-muted uppercase tracking-wider">Financial Overview</h2>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <p className="text-xs text-muted">Total Budget</p>
+                                <p className="text-xl font-bold text-foreground">₹2.4 Cr</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted">Expense Till Date</p>
+                                <p className="text-xl font-bold text-red-400">₹85.2 L</p>
+                            </div>
+                        </div>
+                        <div className="mt-4 h-2 w-full rounded-full bg-gray-800">
+                            <div className="h-2 w-[35%] rounded-full bg-primary"></div>
+                        </div>
+                        <p className="mt-2 text-xs text-muted text-right">35% Utilized</p>
+                    </div>
+                </div>
+
+                {/* 3. OPERATIONAL DETAILS (Tabs/Grid) */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                    {/* LABOUR DETAILS */}
+                    <div className="rounded-xl border border-gray-700 bg-panel p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-bold text-foreground flex items-center gap-2"><Users size={18} className="text-primary" /> Labour Force</h3>
+                            <span className="text-xs bg-success/10 text-success px-2 py-1 rounded">Active</span>
+                        </div>
+                        <div className="space-y-3">
+                            <div className="flex justify-between text-sm p-2 bg-surface rounded">
+                                <span className="text-muted">Skilled</span>
+                                <span className="font-semibold text-foreground">12 Present</span>
+                            </div>
+                            <div className="flex justify-between text-sm p-2 bg-surface rounded">
+                                <span className="text-muted">Unskilled</span>
+                                <span className="font-semibold text-foreground">25 Present</span>
+                            </div>
+                            <div className="flex justify-between text-sm p-2 bg-surface rounded">
+                                <span className="text-muted">Supervisors</span>
+                                <span className="font-semibold text-foreground">2 Present</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* MATERIAL DETAILS */}
+                    <div className="rounded-xl border border-gray-700 bg-panel p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-bold text-foreground flex items-center gap-2"><Package size={18} className="text-orange-400" /> Materials</h3>
+                            <span className="text-xs bg-surface text-muted px-2 py-1 rounded">Today's Inward</span>
+                        </div>
+                        <div className="space-y-3">
+                            <div className="flex justify-between text-sm p-2 border-l-2 border-primary pl-3">
+                                <span className="text-foreground">Cement Bags</span>
+                                <span className="font-mono text-muted">50 Nos</span>
+                            </div>
+                            <div className="flex justify-between text-sm p-2 border-l-2 border-blue-500 pl-3">
+                                <span className="text-foreground">Steel (12mm)</span>
+                                <span className="font-mono text-muted">2.5 Tons</span>
+                            </div>
+                            <div className="flex justify-between text-sm p-2 border-l-2 border-purple-500 pl-3">
+                                <span className="text-foreground">M-Sand</span>
+                                <span className="font-mono text-muted">3 Units</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* SITE ISSUES */}
+                    <div className="rounded-xl border border-gray-700 bg-panel p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-bold text-foreground flex items-center gap-2"><AlertTriangle size={18} className="text-red-400" /> Critical Issues</h3>
+                            <span className="text-xs bg-red-500/10 text-red-500 px-2 py-1 rounded">2 Open</span>
+                        </div>
+                        <div className="space-y-3">
+                            <div className="p-3 bg-surface rounded-lg border border-gray-700">
+                                <p className="text-sm font-medium text-red-400">Material Shortage</p>
+                                <p className="text-xs text-muted mt-1">Cement stock critical. Need urgent order.</p>
+                            </div>
+                            <div className="p-3 bg-surface rounded-lg border border-gray-700">
+                                <p className="text-sm font-medium text-warning">Machinery Breakdown</p>
+                                <p className="text-xs text-muted mt-1">Mixer machine maintenance required.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        );
+    }
+
+    // --- PM VIEW ---
+    if (userRole === "Project Manager") {
+        return (
+            <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <div className="flex items-center gap-2 text-sm text-muted">
+                            <Link href="/dashboard" className="hover:text-primary transition-colors">Dashboard</Link>
+                            <span>/</span>
+                            <span>{site.name}</span>
+                        </div>
+                        <h1 className="mt-1 text-2xl font-bold text-foreground">Site Work Entry Review</h1>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href={`/sites/${id}/reports`}
+                            className="flex items-center gap-2 rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-foreground hover:bg-gray-800 transition-colors"
+                        >
+                            <FileText size={18} />
+                            Generate Report
+                        </Link>
+                        {report.status === "Approved" ? (
+                            <div className="flex items-center gap-2 rounded-full bg-success/20 px-4 py-2 text-sm font-semibold text-success border border-success/30">
+                                <CheckCircle size={18} />
+                                Approved
+                            </div>
+                        ) : (
+                            <>
+                                {isEditing ? (
+                                    <>
+                                        <button
+                                            onClick={() => setIsEditing(false)}
+                                            className="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-foreground hover:bg-gray-800"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleSave}
+                                            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90"
+                                        >
+                                            <Save size={18} />
+                                            Save Changes
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={() => setIsEditing(true)}
+                                            className="flex items-center gap-2 rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-foreground hover:bg-gray-800"
+                                        >
+                                            <Edit size={18} />
+                                            Customize Data
+                                        </button>
+                                        <button
+                                            onClick={handleApprove}
+                                            className="flex items-center gap-2 rounded-lg bg-success px-4 py-2 text-sm font-semibold text-white hover:bg-success/90"
+                                        >
+                                            <CheckCircle size={18} />
+                                            Approve Entry
+                                        </button>
+                                    </>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </div>
+
+                <div className="grid gap-6 md:grid-cols-2">
+                    {/* Engineer & Attendance */}
+                    <div className="rounded-xl border border-gray-700 bg-panel p-6">
+                        <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+                            <Users className="text-primary" size={20} />
+                            Site Engineer Details
+                        </h3>
+                        <div className="space-y-4">
+                            <div className="flex justify-between border-b border-gray-700 pb-2">
+                                <span className="text-muted">Name</span>
+                                <span className="font-medium text-foreground">{report.engineerName}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-muted">Attendance</span>
+                                {isEditing ? (
+                                    <select
+                                        className="rounded border border-gray-600 bg-surface px-2 py-1 text-sm text-foreground"
+                                        value={report.engineerAttendance}
+                                        onChange={(e) => setReport({ ...report, engineerAttendance: e.target.value as any })}
+                                    >
+                                        <option>Present</option>
+                                        <option>Absent</option>
+                                        <option>Half Day</option>
+                                    </select>
+                                ) : (
+                                    <span className={`px-2 py-0.5 rounded text-xs font-semibold ${report.engineerAttendance === 'Present' ? 'bg-success/20 text-success' : 'bg-red-500/20 text-red-500'
+                                        }`}>
+                                        {report.engineerAttendance}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Financials */}
+                    <div className="rounded-xl border border-gray-700 bg-panel p-6">
+                        <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+                            <DollarSign className="text-warning" size={20} />
+                            Financial Overview
+                        </h3>
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center border-b border-gray-700 pb-2">
+                                <span className="text-muted">Labor Cost</span>
+                                {isEditing ? (
+                                    <input
+                                        type="number"
+                                        className="w-32 rounded border border-gray-600 bg-surface px-2 py-1 text-right text-sm text-foreground"
+                                        value={report.laborCost}
+                                        onChange={(e) => setReport({ ...report, laborCost: Number(e.target.value) })}
+                                    />
+                                ) : (
+                                    <span className="font-medium text-foreground">₹{report.laborCost.toLocaleString()}</span>
+                                )}
+                            </div>
+                            <div className="flex justify-between items-center border-b border-gray-700 pb-2">
+                                <span className="text-muted">Petty Cash Spend</span>
+                                {isEditing ? (
+                                    <input
+                                        type="number"
+                                        className="w-32 rounded border border-gray-600 bg-surface px-2 py-1 text-right text-sm text-foreground"
+                                        value={report.pettyCashSpend}
+                                        onChange={(e) => setReport({ ...report, pettyCashSpend: Number(e.target.value) })}
+                                    />
+                                ) : (
+                                    <span className="font-medium text-foreground">₹{report.pettyCashSpend.toLocaleString()}</span>
+                                )}
+                            </div>
+                            <div className="flex justify-between pt-2">
+                                <span className="font-semibold text-foreground">Total Cost per Day</span>
+                                <span className="text-xl font-bold text-primary">₹{totalCost.toLocaleString()}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Material In / Out */}
+                    <div className="rounded-xl border border-gray-700 bg-panel p-6">
+                        <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+                            <Package className="text-blue-400" size={20} />
+                            Material Log
+                        </h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <h4 className="mb-2 text-sm font-medium text-muted uppercase">In (Received)</h4>
+                                <ul className="list-disc list-inside space-y-1 text-sm text-foreground">
+                                    {report.materialIn.map((item, idx) => (
+                                        <li key={idx}>{item}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 className="mb-2 text-sm font-medium text-muted uppercase">Out (Used)</h4>
+                                <ul className="list-disc list-inside space-y-1 text-sm text-foreground">
+                                    {report.materialOut.map((item, idx) => (
+                                        <li key={idx}>{item}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                        {isEditing && <p className="mt-4 text-xs text-muted italic">Material editing specific UI would go here (adding/removing items).</p>}
+                    </div>
+
+                    {/* Extras & Details */}
+                    <div className="rounded-xl border border-gray-700 bg-panel p-6">
+                        <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+                            <Activity className="text-purple-400" size={20} />
+                            Additional Details
+                        </h3>
+                        <div className="space-y-4">
+                            <div>
+                                <span className="block text-sm text-muted mb-1">Extra Materials Required</span>
+                                <div className="rounded bg-surface p-2 text-sm text-foreground">
+                                    {report.extraMaterials.length > 0 ? report.extraMaterials.join(", ") : "None"}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="block text-sm text-muted mb-1">Petty Cash Details</span>
+                                {isEditing ? (
+                                    <textarea
+                                        className="w-full rounded border border-gray-600 bg-surface px-2 py-1 text-sm text-foreground"
+                                        value={report.pettyCashDetails}
+                                        onChange={(e) => setReport({ ...report, pettyCashDetails: e.target.value })}
+                                    />
+                                ) : (
+                                    <div className="rounded bg-surface p-2 text-sm text-foreground">
+                                        {report.pettyCashDetails}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // --- DEFAULT / ENGINEER VIEW ---
     const currentDate = new Date().toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
@@ -168,6 +562,18 @@ export default async function SiteDetailsPage({ params }: PageProps) {
                                 <div className="flex flex-col items-center">
                                     <Activity size={24} className="mb-1" />
                                     Report Site Issue
+                                </div>
+                            </Link>
+
+                            <Link
+                                href={`/sites/${site.id}/reports`}
+                                className="flex items-center justify-center gap-2 rounded-lg bg-surface border border-gray-600 p-4 text-center font-semibold text-foreground transition-colors hover:border-primary hover:text-primary"
+                            >
+                                <div className="flex flex-col items-center">
+                                    <Activity size={24} className="mb-1 hidden" />
+                                    {/* Reusing Activity temporarily or import FileText if available. Let's use Calendar for now if FileText isn't imported, or add FileText to import */}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-1"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /><path d="M16 13H8" /><path d="M16 17H8" /><path d="M10 9H8" /></svg>
+                                    Generate Site Report
                                 </div>
                             </Link>
                         </div>
