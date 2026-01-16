@@ -25,14 +25,40 @@ export default function LeavePage() {
     useEffect(() => {
         const role = localStorage.getItem("userRole") || "Engineer";
         setUserRole(role);
+
+        const savedLeaves = localStorage.getItem("destylus_dashboard_leaves_v2");
+        if (savedLeaves) {
+            setRequests(JSON.parse(savedLeaves));
+        } else {
+            localStorage.setItem("destylus_dashboard_leaves_v2", JSON.stringify(MOCK_LEAVE_REQUESTS));
+        }
     }, []);
 
     const handleAction = (id: number, status: string) => {
-        setRequests(prev => prev.map(req => req.id === id ? { ...req, status } : req));
+        const updated = requests.map(req => req.id === id ? { ...req, status } : req);
+        setRequests(updated);
+        localStorage.setItem("destylus_dashboard_leaves_v2", JSON.stringify(updated));
     };
 
     const handleSubmitApplication = (e: React.FormEvent) => {
         e.preventDefault();
+        const userName = localStorage.getItem("userName") || "New User";
+        const role = localStorage.getItem("userRole") || "Engineer";
+
+        const newRequest = {
+            id: Date.now(),
+            name: userName,
+            role: role,
+            type: leaveType,
+            from: startDate,
+            to: endDate,
+            reason: reason,
+            status: "Pending"
+        };
+
+        const updated = [newRequest, ...requests];
+        setRequests(updated);
+        localStorage.setItem("destylus_dashboard_leaves_v2", JSON.stringify(updated));
         setIsSubmitted(true);
     };
 
@@ -55,7 +81,7 @@ export default function LeavePage() {
                         onClick={() => setActiveTab("pending")}
                         className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 ${activeTab === "pending" ? "border-primary text-primary" : "border-transparent text-muted hover:text-foreground"}`}
                     >
-                        Pending Requests <span className="ml-2 rounded-full bg-primary/20 text-primary px-2 py-0.5 text-xs">{requests.filter(r => r.status === "Pending").length}</span>
+                        Pending Requests <span className="ml-2 rounded-lg bg-primary/20 text-primary px-2 py-0.5 text-xs">{requests.filter(r => r.status === "Pending").length}</span>
                     </button>
                     <button
                         onClick={() => setActiveTab("history")}
@@ -76,7 +102,8 @@ export default function LeavePage() {
                         displayedRequests.map((req) => (
                             <div key={req.id} className="bg-panel border border-gray-700 rounded-xl p-6 flex flex-col md:flex-row gap-6 md:items-center justify-between">
                                 <div className="flex items-start gap-4">
-                                    <div className="h-12 w-12 rounded-full bg-surface border border-gray-600 flex items-center justify-center text-lg font-bold text-foreground">
+                                    <div className={`h-12 w-12 rounded-full border flex items-center justify-center text-lg font-bold text-black
+                                        ${req.role === 'Project Manager' ? 'bg-orange-300 border-orange-400/20' : 'bg-orange-100 border-orange-200'}`}>
                                         {req.name.charAt(0)}
                                     </div>
                                     <div>

@@ -1,8 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Filter, Briefcase, MapPin, Users, Star, Plus, ArrowRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Filter, Briefcase, MapPin, Users, Star, Plus, ArrowRight, Trash2, X } from "lucide-react";
 import Link from "next/link";
+
+// Mock Data Type
+interface ProjectManager {
+    id: string;
+    name: string;
+    role: string;
+    department: string;
+    activeSites: number;
+    teamSize: number;
+    experience: string;
+    rating: number;
+    status: string;
+    avatar: string;
+}
 
 // Mock Data
 const PROJECT_MANAGERS = [
@@ -45,9 +59,64 @@ const PROJECT_MANAGERS = [
 ];
 
 export default function ProjectManagersPage() {
+    const [pms, setPms] = useState<ProjectManager[]>(PROJECT_MANAGERS);
     const [searchQuery, setSearchQuery] = useState("");
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [newPm, setNewPm] = useState({
+        name: "",
+        role: "Project Manager",
+        department: "Infrastructure",
+        experience: "5 Years",
+        status: "Active"
+    });
 
-    const filteredPMs = PROJECT_MANAGERS.filter(pm =>
+    useEffect(() => {
+        const savedPMs = localStorage.getItem("destylus_dashboard_pms_v2");
+        if (savedPMs) {
+            setPms(JSON.parse(savedPMs));
+        } else {
+            localStorage.setItem("destylus_dashboard_pms_v2", JSON.stringify(PROJECT_MANAGERS));
+        }
+    }, []);
+
+    const handleDelete = (id: string, e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (confirm("Are you sure you want to delete this manager?")) {
+            const updatedPMs = pms.filter(pm => pm.id !== id);
+            setPms(updatedPMs);
+            localStorage.setItem("destylus_dashboard_pms_v2", JSON.stringify(updatedPMs));
+        }
+    };
+
+    const handleAddPm = (e: React.FormEvent) => {
+        e.preventDefault();
+        const nextId = (pms.length > 0
+            ? Math.max(...pms.map(p => parseInt(p.id) || 0)) + 1
+            : 1
+        ).toString();
+
+        const manager: ProjectManager = {
+            id: nextId,
+            name: newPm.name,
+            role: newPm.role,
+            department: newPm.department,
+            activeSites: 0,
+            teamSize: 0,
+            experience: newPm.experience,
+            rating: 5.0,
+            status: newPm.status,
+            avatar: newPm.name.charAt(0).toUpperCase()
+        };
+
+        const updatedPMs = [...pms, manager];
+        setPms(updatedPMs);
+        localStorage.setItem("destylus_dashboard_pms_v2", JSON.stringify(updatedPMs));
+        setNewPm({ name: "", role: "Project Manager", department: "Infrastructure", experience: "5 Years", status: "Active" });
+        setIsAddModalOpen(false);
+    };
+
+    const filteredPMs = pms.filter(pm =>
         pm.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         pm.department.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -64,7 +133,10 @@ export default function ProjectManagersPage() {
                     <h1 className="mt-1 text-2xl font-bold text-foreground">Project Managers</h1>
                     <p className="text-muted">Directory of Project Leads</p>
                 </div>
-                <button className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90 transition-colors">
+                <button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-black shadow-sm hover:bg-primary/90 transition-colors"
+                >
                     <Plus size={18} />
                     Add Manager
                 </button>
@@ -94,18 +166,25 @@ export default function ProjectManagersPage() {
                     <Link key={pm.id} href={`/project-managers/${pm.id}`} className="group relative flex flex-col rounded-xl border border-gray-700 bg-panel p-6 shadow-sm transition-all hover:border-primary/50 hover:shadow-md">
                         <div className="flex items-start justify-between">
                             <div className="flex gap-4">
-                                <div className="h-14 w-14 rounded-full bg-blue-500/10 flex items-center justify-center text-xl font-bold text-blue-500">
+                                <div className="h-14 w-14 rounded-full bg-orange-300 border border-orange-400/20 flex items-center justify-center text-xl font-bold text-black">
                                     {pm.avatar}
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">{pm.name}</h3>
                                     <p className="text-sm text-muted">{pm.role}</p>
-                                    <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium border ${pm.status === 'Active' ? 'bg-success/10 text-success border-success/20' : 'bg-warning/10 text-warning border-warning/20'
+                                    <span className={`mt-1 inline-block rounded-lg px-2 py-0.5 text-xs font-medium border ${pm.status === 'Active' ? 'bg-success/10 text-success border-success/20' : 'bg-warning/10 text-warning border-warning/20'
                                         }`}>
                                         {pm.status}
                                     </span>
                                 </div>
                             </div>
+                            <button
+                                onClick={(e) => handleDelete(pm.id, e)}
+                                className="rounded-lg p-2 text-muted hover:bg-red-500/10 hover:text-red-500 transition-colors z-10"
+                                title="Delete Manager"
+                            >
+                                <Trash2 size={18} />
+                            </button>
                         </div>
 
                         <div className="mt-6 grid grid-cols-2 gap-4 border-t border-gray-700 pt-4">
@@ -144,6 +223,92 @@ export default function ProjectManagersPage() {
                     </Link>
                 ))}
             </div>
+
+            {/* Add Manager Modal */}
+            {isAddModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-md rounded-2xl bg-panel p-6 shadow-xl border border-gray-700">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-bold text-foreground">Add New Manager</h2>
+                            <button
+                                onClick={() => setIsAddModalOpen(false)}
+                                className="rounded-full p-2 text-muted hover:bg-gray-700 hover:text-foreground"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleAddPm} className="flex flex-col gap-4">
+                            <div>
+                                <label className="mb-1 block text-sm font-medium text-foreground">Manager Name</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={newPm.name}
+                                    onChange={(e) => setNewPm({ ...newPm, name: e.target.value })}
+                                    className="w-full rounded-lg border border-gray-600 bg-surface px-4 py-2 text-foreground focus:border-primary focus:outline-none"
+                                    placeholder="e.g., Jane Cooper"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-sm font-medium text-foreground">Role</label>
+                                <select
+                                    value={newPm.role}
+                                    onChange={(e) => setNewPm({ ...newPm, role: e.target.value })}
+                                    className="w-full rounded-lg border border-gray-600 bg-surface px-4 py-2 text-foreground focus:border-primary focus:outline-none"
+                                >
+                                    <option>Senior Project Manager</option>
+                                    <option>Project Manager</option>
+                                    <option>Assistant PM</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-sm font-medium text-foreground">Department</label>
+                                <select
+                                    value={newPm.department}
+                                    onChange={(e) => setNewPm({ ...newPm, department: e.target.value })}
+                                    className="w-full rounded-lg border border-gray-600 bg-surface px-4 py-2 text-foreground focus:border-primary focus:outline-none"
+                                >
+                                    <option>Infrastructure</option>
+                                    <option>Residential</option>
+                                    <option>Commercial</option>
+                                    <option>Industrial</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-sm font-medium text-foreground">Experience</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={newPm.experience}
+                                    onChange={(e) => setNewPm({ ...newPm, experience: e.target.value })}
+                                    className="w-full rounded-lg border border-gray-600 bg-surface px-4 py-2 text-foreground focus:border-primary focus:outline-none"
+                                    placeholder="e.g., 5 Years"
+                                />
+                            </div>
+
+                            <div className="mt-4 flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsAddModalOpen(false)}
+                                    className="flex-1 rounded-lg border border-gray-600 px-4 py-2 text-sm font-semibold text-foreground hover:bg-gray-700"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-black hover:bg-primary-hover"
+                                >
+                                    Create Manager
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

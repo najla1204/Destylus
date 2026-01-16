@@ -31,7 +31,7 @@ export default async function ProjectDetailsPage({ params }: PageProps) {
                                 <MapPin size={14} />
                                 {project.location}
                             </span>
-                            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${project.status === 'Active' ? 'bg-success/20 text-success' :
+                            <span className={`rounded-lg px-2 py-0.5 text-xs font-semibold ${project.status === 'Active' ? 'bg-success/20 text-success' :
                                 project.status === 'On Hold' ? 'bg-warning/20 text-warning' :
                                     'bg-blue-500/20 text-blue-500'
                                 }`}>

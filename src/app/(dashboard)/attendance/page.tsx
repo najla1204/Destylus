@@ -87,7 +87,7 @@ export default function AttendancePage() {
                             </div>
                         </div>
                     </div>
-                    <div className={`rounded-full px-3 py-1 text-sm font-medium ${status === "checked-in" ? "bg-green-100 text-green-700" : status === "checked-out" ? "bg-gray-100 text-gray-700" : "bg-yellow-100 text-yellow-700"}`}>
+                    <div className={`rounded-lg px-3 py-1 text-sm font-medium ${status === "checked-in" ? "bg-green-100 text-green-700" : status === "checked-out" ? "bg-gray-100 text-gray-700" : "bg-yellow-100 text-yellow-700"}`}>
                         {status === "checked-in" ? "On Duty" : status === "checked-out" ? "Shift Ended" : "Not Checked In"}
                     </div>
                 </div>
@@ -185,7 +185,10 @@ export default function AttendancePage() {
                             {approvedLogs.map((log) => (
                                 <tr key={log.id} className="hover:bg-surface/50 transition-colors">
                                     <td className="px-6 py-4 font-medium text-foreground flex items-center gap-2">
-                                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">{log.name.charAt(0)}</div>
+                                        <div className={`h-8 w-8 rounded-full flex items-center justify-center text-black text-xs font-bold border
+                                            ${log.role === 'Project Manager' ? 'bg-orange-300 border-orange-400/20' : 'bg-orange-100 border-orange-200'}`}>
+                                            {log.name.charAt(0)}
+                                        </div>
                                         {log.name}
                                     </td>
                                     <td className="px-6 py-4 text-muted">{log.role}</td>
@@ -195,7 +198,7 @@ export default function AttendancePage() {
                                         <span className="text-green-400">IN: {log.inTime}</span><br /><span className="text-orange-400">OUT: {log.outTime}</span>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className="inline-flex items-center gap-1 rounded-full bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-500 border border-green-500/20"><BadgeCheck size={12} /> Approved</span>
+                                        <span className="inline-flex items-center gap-1 rounded-lg bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-500 border border-green-500/20"><BadgeCheck size={12} /> Approved</span>
                                     </td>
                                 </tr>
                             ))}
@@ -227,7 +230,7 @@ export default function AttendancePage() {
                         onClick={() => setPmTab("verify")}
                         className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 ${pmTab === "verify" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700"}`}
                     >
-                        Verify Team <span className="ml-2 rounded-full bg-red-100 text-red-600 px-2 py-0.5 text-xs">{pendingLogs.length}</span>
+                        Verify Team <span className="ml-2 rounded-lg bg-red-100 text-red-600 px-2 py-0.5 text-xs">{pendingLogs.length}</span>
                     </button>
                 </div>
 

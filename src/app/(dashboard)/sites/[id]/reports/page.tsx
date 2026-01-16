@@ -352,7 +352,7 @@ export default function SiteReportsPage({ params }: { params: Promise<{ id: stri
                                                         <td className="px-4 py-2 text-gray-700">{entry.date}</td>
                                                         <td className="px-4 py-2 text-gray-900 font-medium">{entry.materialName}</td>
                                                         <td className="px-4 py-2">
-                                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${entry.action === "Received" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
+                                                            <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${entry.action === "Received" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
                                                                 }`}>
                                                                 {entry.action}
                                                             </span>
@@ -388,9 +388,9 @@ export default function SiteReportsPage({ params }: { params: Promise<{ id: stri
                                                     <tr key={entry.id}>
                                                         <td className="px-4 py-2 text-gray-700">{entry.date}</td>
                                                         <td className="px-4 py-2">
-                                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${entry.severity === "High" ? "bg-red-100 text-red-700" :
-                                                                    entry.severity === "Medium" ? "bg-amber-100 text-amber-700" :
-                                                                        "bg-gray-100 text-gray-600"
+                                                            <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${entry.severity === "High" ? "bg-red-100 text-red-700" :
+                                                                entry.severity === "Medium" ? "bg-amber-100 text-amber-700" :
+                                                                    "bg-gray-100 text-gray-600"
                                                                 }`}>
                                                                 {entry.severity}
                                                             </span>

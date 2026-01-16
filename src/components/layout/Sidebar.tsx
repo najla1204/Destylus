@@ -69,7 +69,10 @@ export default function Sidebar() {
 
       <div className="border-t border-gray-700 p-4">
         <div className="flex items-center gap-3 rounded-lg bg-surface p-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-black">
+          <div className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-black border
+            ${userInfo.role === 'HR Manager' ? 'bg-primary border-primary/20' :
+              userInfo.role === 'Project Manager' ? 'bg-orange-300 border-orange-400/20' :
+                'bg-orange-100 border-orange-200'}`}>
             {userInfo.name.charAt(0)}
           </div>
           <div className="flex flex-col">
@@ -79,8 +82,9 @@ export default function Sidebar() {
         </div>
         <button
           onClick={() => {
+            localStorage.removeItem("userName");
+            localStorage.removeItem("userRole");
             router.push("/");
-            localStorage.clear();
           }}
           className="mt-2 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium text-red-400 transition-colors hover:bg-gray-800 hover:text-red-300"
         >

@@ -92,7 +92,7 @@ export default function EngineersPage() {
                             className="group flex flex-col items-start gap-4 rounded-xl border border-gray-700 bg-panel p-4 transition-all hover:border-primary/50 hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
                         >
                             <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center text-lg font-bold text-blue-500">
+                                <div className="h-24 w-24 rounded-full bg-orange-100 border-2 border-orange-200 flex items-center justify-center text-black text-3xl font-bold">
                                     {eng.name.charAt(0)}
                                 </div>
                                 <div>
@@ -113,9 +113,9 @@ export default function EngineersPage() {
 
                             <div className="flex w-full items-center justify-between sm:w-auto sm:gap-6">
                                 <div className="flex flex-col items-end gap-1">
-                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${eng.attendance === 'Present' ? 'bg-success/10 text-success border-success/20' :
-                                            eng.attendance === 'Absent' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
-                                                'bg-gray-700 text-muted border-gray-600'
+                                    <span className={`px-2 py-0.5 rounded-lg text-xs font-medium border ${eng.attendance === 'Present' ? 'bg-success/10 text-success border-success/20' :
+                                        eng.attendance === 'Absent' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+                                            'bg-gray-700 text-muted border-gray-600'
                                         }`}>
                                         {eng.attendance}
                                     </span>

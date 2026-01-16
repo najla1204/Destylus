@@ -50,7 +50,7 @@ export default function ProjectManagerDetailsPage() {
             {/* Header Card */}
             <div className="rounded-xl border border-gray-700 bg-panel p-6">
                 <div className="flex flex-col md:flex-row items-center gap-6">
-                    <div className="h-24 w-24 rounded-full bg-blue-500/10 flex items-center justify-center text-3xl font-bold text-blue-500 border-2 border-primary/20">
+                    <div className="h-24 w-24 rounded-full bg-orange-300 flex items-center justify-center text-3xl font-bold text-black border-2 border-orange-400/20">
                         {pm.name.charAt(0)}
                     </div>
                     <div className="text-center md:text-left flex-1">
@@ -110,7 +110,7 @@ export default function ProjectManagerDetailsPage() {
                         {pm.team.map(member => (
                             <Link key={member.id} href={`/engineers/${member.id}`} className="flex items-center justify-between rounded-xl border border-gray-700 bg-panel p-4 hover:bg-surface transition-colors">
                                 <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center text-sm font-bold text-muted">
+                                    <div className="h-10 w-10 rounded-full bg-orange-100 border border-orange-200 flex items-center justify-center text-sm font-bold text-black">
                                         {member.name.charAt(0)}
                                     </div>
                                     <div>

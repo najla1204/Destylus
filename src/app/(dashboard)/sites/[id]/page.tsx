@@ -235,7 +235,7 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                             Generate Report
                         </Link>
                         {report.status === "Approved" ? (
-                            <div className="flex items-center gap-2 rounded-full bg-success/20 px-4 py-2 text-sm font-semibold text-success border border-success/30">
+                            <div className="flex items-center gap-2 rounded-lg bg-success/20 px-4 py-2 text-sm font-semibold text-success border border-success/30">
                                 <CheckCircle size={18} />
                                 Approved
                             </div>
@@ -476,7 +476,7 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                     <div className="rounded-xl border border-gray-700 bg-panel p-6">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-lg font-semibold text-foreground">Site Overview</h2>
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${site.status === 'Active' ? 'bg-success/20 text-success' : 'bg-gray-700 text-gray-300'
+                            <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${site.status === 'Active' ? 'bg-success/20 text-success' : 'bg-gray-700 text-gray-300'
                                 }`}>
                                 {site.status}
                             </span>

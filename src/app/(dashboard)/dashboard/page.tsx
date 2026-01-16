@@ -20,7 +20,8 @@ import {
     Package,
     CheckCircle,
     Clock,
-    ArrowRight
+    ArrowRight,
+    Contact
 } from "lucide-react";
 import Link from "next/link";
 
@@ -101,6 +102,22 @@ export default function Home() {
         const name = localStorage.getItem("userName") || "";
         setUserRole(role);
         setUserName(name);
+
+        // Load persisted sites
+        const savedSites = localStorage.getItem("destylus_dashboard_sites_v3");
+        if (savedSites) {
+            setSites(JSON.parse(savedSites));
+        } else {
+            localStorage.setItem("destylus_dashboard_sites_v3", JSON.stringify(INITIAL_SITES));
+        }
+
+        // Load persisted employees
+        const savedEmployees = localStorage.getItem("destylus_dashboard_employees_v2");
+        if (savedEmployees) {
+            setEmployees(JSON.parse(savedEmployees));
+        } else {
+            localStorage.setItem("destylus_dashboard_employees_v2", JSON.stringify(INITIAL_EMPLOYEES));
+        }
     }, []);
 
     // --- Site Handlers ---
@@ -111,14 +128,21 @@ export default function Home() {
 
     const handleDeleteSite = (id: string) => {
         if (confirm("Are you sure you want to delete this site?")) {
-            setSites(sites.filter(s => s.id !== id));
+            const updatedSites = sites.filter(s => s.id !== id);
+            setSites(updatedSites);
+            localStorage.setItem("destylus_dashboard_sites_v3", JSON.stringify(updatedSites));
         }
     };
 
     const handleAddSite = (e: React.FormEvent) => {
         e.preventDefault();
+        const nextId = (sites.length > 0
+            ? Math.max(...sites.map(s => parseInt(s.id) || 0)) + 1
+            : 1
+        ).toString();
+
         const site: Site = {
-            id: Math.random().toString(36).substr(2, 9),
+            id: nextId,
             name: newSite.name || "Untitled Project",
             location: newSite.location || "Unknown Location",
             manager: userName,
@@ -126,7 +150,9 @@ export default function Home() {
             startDate: newSite.startDate || new Date().toISOString().split('T')[0],
             status: (newSite.status as any) || "Planning"
         };
-        setSites([...sites, site]);
+        const updatedSites = [...sites, site];
+        setSites(updatedSites);
+        localStorage.setItem("destylus_dashboard_sites_v3", JSON.stringify(updatedSites));
         setShowAddSiteModal(false);
         setNewSite({ name: "", location: "", budget: 0, status: "Planning", startDate: new Date().toISOString().split('T')[0] });
     };
@@ -134,7 +160,9 @@ export default function Home() {
     // --- Employee Handlers ---
     const handleDeleteEmployee = (id: string) => {
         if (confirm("Are you sure you want to delete this employee?")) {
-            setEmployees(employees.filter(e => e.id !== id));
+            const updatedEmployees = employees.filter(e => e.id !== id);
+            setEmployees(updatedEmployees);
+            localStorage.setItem("destylus_dashboard_employees_v2", JSON.stringify(updatedEmployees));
         }
     };
 
@@ -147,7 +175,9 @@ export default function Home() {
             site: newEmployee.site || "Unassigned",
             status: "Active"
         };
-        setEmployees([...employees, emp]);
+        const updatedEmployees = [...employees, emp];
+        setEmployees(updatedEmployees);
+        localStorage.setItem("destylus_dashboard_employees_v2", JSON.stringify(updatedEmployees));
         setShowAddEmployeeModal(false);
         setNewEmployee({ name: "", role: "Site Engineer", site: "", status: "Active" });
     };
@@ -170,7 +200,7 @@ export default function Home() {
                     <div className="rounded-xl border border-gray-700 bg-panel p-6 shadow-sm">
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-muted">Total Employees</span>
-                            <Users size={20} className="text-blue-500" />
+                            <Contact size={20} className="text-blue-500" />
                         </div>
                         <div className="mt-2 text-3xl font-bold text-foreground">{employees.length}</div>
                         <span className="text-xs text-success">+Active Workforce</span>
@@ -229,7 +259,7 @@ export default function Home() {
                                             <span className="text-xs text-muted flex items-center gap-1"><MapPin size={10} /> {site.location}</span>
                                         </Link>
                                         <div className="flex items-center gap-3">
-                                            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${site.status === 'Active' ? 'text-success border-success/30 bg-success/10' : 'text-muted border-gray-600'
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-lg border ${site.status === 'Active' ? 'text-success border-success/30 bg-success/10' : 'text-muted border-gray-600'
                                                 }`}>{site.status}</span>
                                             <button
                                                 onClick={() => handleDeleteSite(site.id)}
@@ -262,7 +292,7 @@ export default function Home() {
                                 {employees.map(emp => (
                                     <div key={emp.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-700 bg-surface hover:border-gray-500 transition-colors">
                                         <Link href={`/engineers/${emp.id}`} className="flex-1 flex items-center gap-3 cursor-pointer">
-                                            <div className="h-8 w-8 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold text-xs">
+                                            <div className="h-8 w-8 rounded-full bg-orange-100 text-black flex items-center justify-center font-bold text-xs border border-orange-200">
                                                 {emp.name.charAt(0)}
                                             </div>
                                             <div className="flex flex-col">
@@ -394,7 +424,7 @@ export default function Home() {
                                     <div className="rounded-lg bg-primary/10 p-3">
                                         <Building className="text-primary" size={24} />
                                     </div>
-                                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium border ${site.status === 'Active' ? 'bg-success/10 text-success border-success/20' :
+                                    <span className={`rounded-lg px-2.5 py-0.5 text-xs font-medium border ${site.status === 'Active' ? 'bg-success/10 text-success border-success/20' :
                                         site.status === 'Completed' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
                                             'bg-warning/10 text-warning border-warning/20'
                                         }`}>
@@ -411,11 +441,11 @@ export default function Home() {
                                     </div>
                                     <div className="flex items-center gap-2 text-sm text-muted">
                                         <DollarSign size={16} />
-                                        <span>Budget: ₹{(site.budget / 100000).toFixed(1)}L</span>
+                                        <span>Budget: ₹{((site.budget || 0) / 100000).toFixed(1)}L</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm text-muted">
                                         <Calendar size={16} />
-                                        <span>Started: {new Date(site.startDate).toLocaleDateString()}</span>
+                                        <span>Started: {new Date(site.startDate || Date.now()).toLocaleDateString()}</span>
                                     </div>
                                 </div>
                             </Link>

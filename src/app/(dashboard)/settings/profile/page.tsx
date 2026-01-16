@@ -42,13 +42,18 @@ export default function ProfilePage() {
     const [formData, setFormData] = useState<UserProfile>(engineerProfile);
 
     useEffect(() => {
-        const role = localStorage.getItem("userRole");
-        if (role === "Project Manager") {
-            setProfile(pmProfile);
-            setFormData(pmProfile);
+        const role = localStorage.getItem("userRole") || "Engineer";
+        const storageKey = `destylus_user_profile_${role}`;
+        const savedProfile = localStorage.getItem(storageKey);
+
+        if (savedProfile) {
+            const parsed = JSON.parse(savedProfile);
+            setProfile(parsed);
+            setFormData(parsed);
         } else {
-            setProfile(engineerProfile);
-            setFormData(engineerProfile);
+            const initialProfile = role === "Project Manager" ? pmProfile : engineerProfile;
+            setProfile(initialProfile);
+            setFormData(initialProfile);
         }
     }, []);
 
@@ -58,8 +63,9 @@ export default function ProfilePage() {
 
     const handleSave = () => {
         setProfile(formData);
+        const role = localStorage.getItem("userRole") || "Engineer";
+        localStorage.setItem(`destylus_user_profile_${role}`, JSON.stringify(formData));
         setIsEditing(false);
-        // Here you would typically make an API call to update the user
     };
 
     const handleCancel = () => {
@@ -106,7 +112,10 @@ export default function ProfilePage() {
                 {/* Profile Card / Avatar */}
                 <div className="col-span-1">
                     <div className="bg-panel border border-gray-700 rounded-xl p-6 flex flex-col items-center text-center">
-                        <div className="w-32 h-32 rounded-full bg-primary/20 flex items-center justify-center text-primary mb-4 text-4xl font-bold">
+                        <div className={`w-32 h-32 rounded-full flex items-center justify-center mb-4 text-4xl font-bold text-black border-2
+                            ${profile.role.includes('Manager') && profile.role.includes('Project') ? 'bg-orange-300 border-orange-400/20' :
+                                profile.role === 'HR Manager' ? 'bg-primary border-primary/20' :
+                                    'bg-orange-100 border-orange-200'}`}>
                             {profile.name.charAt(0)}
                         </div>
                         <h2 className="text-xl font-bold text-foreground">{profile.name}</h2>

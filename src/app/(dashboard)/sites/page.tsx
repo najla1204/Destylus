@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Plus, MapPin, Trash2, Search, X } from "lucide-react";
 
@@ -15,21 +15,21 @@ interface Site {
 
 const initialSites: Site[] = [
     {
-        id: "s-001",
+        id: "1",
         name: "Skyline Tower A",
         location: "Downtown District",
         status: "Active",
         manager: "John Doe",
     },
     {
-        id: "s-002",
+        id: "2",
         name: "City Bridge Renovation",
         location: "West River",
         status: "Pending",
         manager: "Sarah Smith",
     },
     {
-        id: "s-003",
+        id: "3",
         name: "Green Valley Mall",
         location: "Suburban Area",
         status: "Active",
@@ -40,6 +40,16 @@ const initialSites: Site[] = [
 export default function SitesPage() {
     const [sites, setSites] = useState<Site[]>(initialSites);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+    useEffect(() => {
+        const savedSites = localStorage.getItem("destylus_dashboard_sites_v3");
+        if (savedSites) {
+            setSites(JSON.parse(savedSites));
+        } else {
+            localStorage.setItem("destylus_dashboard_sites_v3", JSON.stringify(initialSites));
+        }
+    }, []);
+
     const [newSite, setNewSite] = useState<Partial<Site>>({
         name: "",
         location: "",
@@ -51,7 +61,9 @@ export default function SitesPage() {
         e.preventDefault(); // Prevent navigation if clicking delete inside a link
         e.stopPropagation();
         if (confirm("Are you sure you want to delete this site?")) {
-            setSites(sites.filter((site) => site.id !== id));
+            const updatedSites = sites.filter((site) => site.id !== id);
+            setSites(updatedSites);
+            localStorage.setItem("destylus_dashboard_sites_v3", JSON.stringify(updatedSites));
         }
     };
 
@@ -59,15 +71,19 @@ export default function SitesPage() {
         e.preventDefault();
         if (!newSite.name || !newSite.location || !newSite.manager) return;
 
-        const site: Site = {
-            id: `s-${Date.now()}`,
-            name: newSite.name,
-            location: newSite.location,
-            status: newSite.status as "Active" | "Completed" | "Pending",
-            manager: newSite.manager,
-        };
+        const nextId = (sites.length > 0
+            ? Math.max(...sites.map(s => parseInt(s.id) || 0)) + 1
+            : 1
+        ).toString();
 
-        setSites([...sites, site]);
+        const site: Site = {
+            id: nextId,
+            ...newSite,
+        } as Site;
+
+        const updatedSites = [...sites, site];
+        setSites(updatedSites);
+        localStorage.setItem("destylus_dashboard_sites_v3", JSON.stringify(updatedSites));
         setNewSite({ name: "", location: "", status: "Active", manager: "" });
         setIsAddModalOpen(false);
     };
@@ -119,11 +135,11 @@ export default function SitesPage() {
                                 <span className="text-sm font-medium text-foreground">{site.manager}</span>
                             </div>
                             <span
-                                className={`rounded-full px-3 py-1 text-xs font-semibold ${site.status === "Active"
-                                        ? "bg-success/20 text-success"
-                                        : site.status === "Pending"
-                                            ? "bg-warning/20 text-warning"
-                                            : "bg-gray-500/20 text-gray-400"
+                                className={`rounded-lg px-3 py-1 text-xs font-semibold ${site.status === "Active"
+                                    ? "bg-success/20 text-success"
+                                    : site.status === "Pending"
+                                        ? "bg-warning/20 text-warning"
+                                        : "bg-gray-500/20 text-gray-400"
                                     }`}
                             >
                                 {site.status}

@@ -40,7 +40,7 @@ export default function ProjectsPage() {
                                 <span className="text-sm font-medium text-primary">{project.id.toUpperCase()}</span>
                                 <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">{project.name}</h3>
                             </div>
-                            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${project.status === 'Active' ? 'bg-success/20 text-success' :
+                            <span className={`rounded-lg px-3 py-1 text-xs font-semibold ${project.status === 'Active' ? 'bg-success/20 text-success' :
                                 project.status === 'On Hold' ? 'bg-warning/20 text-warning' :
                                     'bg-blue-500/20 text-blue-500'
                                 }`}>

@@ -42,6 +42,30 @@ export default function EmployeeDetailsPage() {
     const id = params?.id as string;
     const [employee, setEmployee] = useState<Employee | null>(null);
 
+    const handleDownloadReport = () => {
+        if (!employee) return;
+
+        // Mock history data for CSV
+        const historyData = [
+            ["Date", "Status", "Check In", "Check Out", "Verification"],
+            ["Today", "Present", "09:00 AM", "--", "Pending"],
+            ["Yesterday", "Present", "08:55 AM", "06:05 PM", "Verified"],
+            ["12 Jan 2026", "Present", "09:10 AM", "06:00 PM", "Verified"],
+            ["11 Jan 2026", "Weekly Off", "--", "--", "--"]
+        ];
+
+        const csvContent = "data:text/csv;charset=utf-8,"
+            + historyData.map(e => e.join(",")).join("\n");
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `attendance_${employee.name.replace(/\s+/g, "_")}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     useEffect(() => {
         if (id && MOCK_EMPLOYEES[id]) {
             setEmployee(MOCK_EMPLOYEES[id]);
@@ -76,12 +100,12 @@ export default function EmployeeDetailsPage() {
                 {/* 1. PROFILE CARD */}
                 <div className="rounded-xl border border-gray-700 bg-panel p-6">
                     <div className="flex flex-col items-center text-center">
-                        <div className="h-24 w-24 rounded-full bg-surface border-2 border-gray-700 flex items-center justify-center mb-4">
-                            <User size={40} className="text-muted" />
+                        <div className="h-24 w-24 rounded-full bg-orange-100 border-2 border-orange-200 flex items-center justify-center mb-4 text-black text-3xl font-bold">
+                            {employee.name.charAt(0)}
                         </div>
                         <h2 className="text-xl font-bold text-foreground">{employee.name}</h2>
                         <p className="text-primary font-medium">{employee.role}</p>
-                        <span className={`mt-2 px-3 py-1 rounded-full text-xs font-semibold ${employee.status === 'Active' ? 'bg-success/10 text-success' : 'bg-gray-700 text-muted'
+                        <span className={`mt-2 px-3 py-1 rounded-lg text-xs font-semibold ${employee.status === 'Active' ? 'bg-success/10 text-success' : 'bg-gray-700 text-muted'
                             }`}>
                             {employee.status}
                         </span>
@@ -142,7 +166,12 @@ export default function EmployeeDetailsPage() {
                     <div className="rounded-xl border border-gray-700 bg-panel overflow-hidden">
                         <div className="p-4 border-b border-gray-700 flex justify-between items-center">
                             <h3 className="font-bold text-foreground">Attendance History</h3>
-                            <button className="text-xs text-primary hover:underline">Download Report</button>
+                            <button
+                                onClick={handleDownloadReport}
+                                className="text-xs text-primary hover:underline"
+                            >
+                                Download Report
+                            </button>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">

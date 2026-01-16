@@ -194,15 +194,15 @@ export default function MaterialsPage() {
                                         <td className="p-4 text-right font-mono">₹{(stock * item.unitPrice).toLocaleString()}</td>
                                         <td className="p-4 text-center">
                                             {isOverstocked ? (
-                                                <span className="inline-flex items-center gap-1 rounded-full bg-warning/20 px-2 py-1 text-xs font-medium text-warning">
+                                                <span className="inline-flex items-center gap-1 rounded-lg bg-warning/20 px-2 py-1 text-xs font-medium text-warning">
                                                     Overstock
                                                 </span>
                                             ) : stock < (item.totalIn * 0.2) ? (
-                                                <span className="inline-flex items-center gap-1 rounded-full bg-red-500/20 px-2 py-1 text-xs font-medium text-red-400">
+                                                <span className="inline-flex items-center gap-1 rounded-lg bg-red-500/20 px-2 py-1 text-xs font-medium text-red-400">
                                                     Low Stock
                                                 </span>
                                             ) : (
-                                                <span className="inline-flex items-center gap-1 rounded-full bg-success/20 px-2 py-1 text-xs font-medium text-success">
+                                                <span className="inline-flex items-center gap-1 rounded-lg bg-success/20 px-2 py-1 text-xs font-medium text-success">
                                                     Normal
                                                 </span>
                                             )}
