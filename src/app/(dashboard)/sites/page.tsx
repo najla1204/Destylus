@@ -9,7 +9,7 @@ interface Site {
     id: string;
     name: string;
     location: string;
-    status: "Active" | "Completed" | "Pending";
+    status: "Active" | "Completed" | "Planning" | "Pending";
     manager: string;
 }
 
@@ -25,7 +25,7 @@ const initialSites: Site[] = [
         id: "2",
         name: "City Bridge Renovation",
         location: "West River",
-        status: "Pending",
+        status: "Planning",
         manager: "Sarah Smith",
     },
     {
@@ -91,7 +91,9 @@ export default function SitesPage() {
     return (
         <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-foreground">Site Management</h1>
+                <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                    Site Management
+                </h1>
                 <button
                     onClick={() => setIsAddModalOpen(true)}
                     className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-primary-hover"
@@ -110,7 +112,18 @@ export default function SitesPage() {
                     >
                         <div className="flex items-start justify-between">
                             <div className="flex flex-col">
-                                <span className="text-sm font-medium text-primary mb-1">{site.id.toUpperCase()}</span>
+                                <span className="text-sm font-medium text-primary mb-1 flex items-center gap-1">
+                                    <img
+                                        width="14"
+                                        height="14"
+                                        src={site.status === 'Planning'
+                                            ? "https://img.icons8.com/pulsar-line/48/1A1A1A/blueprint.png"
+                                            : "https://img.icons8.com/ios/50/1A1A1A/road-worker.png"
+                                        }
+                                        alt={site.status === 'Planning' ? "blueprint" : "road-worker"}
+                                    />
+                                    {site.id.toUpperCase()}
+                                </span>
                                 <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
                                     {site.name}
                                 </h3>
@@ -137,7 +150,7 @@ export default function SitesPage() {
                             <span
                                 className={`rounded-lg px-3 py-1 text-xs font-semibold ${site.status === "Active"
                                     ? "bg-success/20 text-success"
-                                    : site.status === "Pending"
+                                    : (site.status === "Pending" || site.status === "Planning")
                                         ? "bg-warning/20 text-warning"
                                         : "bg-gray-500/20 text-gray-400"
                                     }`}

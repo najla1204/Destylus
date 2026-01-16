@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
     TrendingUp,
     AlertTriangle,
@@ -83,6 +84,10 @@ const INITIAL_EMPLOYEES: Employee[] = [
 export default function Home() {
     const [userRole, setUserRole] = useState<string>("");
     const [userName, setUserName] = useState<string>("");
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+    const { replace } = useRouter();
+    const searchQuery = searchParams.get("q")?.toLowerCase() || "";
 
     // Site State
     const [sites, setSites] = useState<Site[]>(INITIAL_SITES);
@@ -122,9 +127,29 @@ export default function Home() {
 
     // --- Site Handlers ---
     const filteredSites = sites.filter(site => {
-        if (showAssignedOnly) return site.manager === userName;
-        return true;
+        const matchesSearch = site.name.toLowerCase().includes(searchQuery) ||
+            site.location.toLowerCase().includes(searchQuery);
+
+        if (showAssignedOnly) return site.manager === userName && matchesSearch;
+        return matchesSearch;
     });
+
+    // HR Filtered Employees
+    const filteredEmployees = employees.filter(emp =>
+        emp.name.toLowerCase().includes(searchQuery) ||
+        emp.role.toLowerCase().includes(searchQuery) ||
+        emp.site.toLowerCase().includes(searchQuery)
+    );
+
+    const handleDashboardSearch = (term: string) => {
+        const params = new URLSearchParams(searchParams);
+        if (term) {
+            params.set("q", term);
+        } else {
+            params.delete("q");
+        }
+        replace(`${pathname}?${params.toString()}`);
+    };
 
     const handleDeleteSite = (id: string) => {
         if (confirm("Are you sure you want to delete this site?")) {
@@ -200,7 +225,7 @@ export default function Home() {
                     <div className="rounded-xl border border-gray-700 bg-panel p-6 shadow-sm">
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-muted">Total Employees</span>
-                            <Contact size={20} className="text-blue-500" />
+                            <img width="20" height="20" src="https://img.icons8.com/fluency-systems-filled/48/1A1A1A/commercial-development-management.png" alt="commercial-development-management" />
                         </div>
                         <div className="mt-2 text-3xl font-bold text-foreground">{employees.length}</div>
                         <span className="text-xs text-success">+Active Workforce</span>
@@ -208,7 +233,7 @@ export default function Home() {
                     <div className="rounded-xl border border-gray-700 bg-panel p-6 shadow-sm">
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-muted">Active Sites</span>
-                            <Building size={20} className="text-primary" />
+                            <img width="20" height="20" src="https://img.icons8.com/ios/50/1A1A1A/road-worker.png" alt="road-worker" />
                         </div>
                         <div className="mt-2 text-3xl font-bold text-foreground">{sites.length}</div>
                         <span className="text-xs text-muted">Ongoing Projects</span>
@@ -216,7 +241,7 @@ export default function Home() {
                     <div className="rounded-xl border border-gray-700 bg-panel p-6 shadow-sm">
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-muted">Pending Claims</span>
-                            <AlertTriangle size={20} className="text-yellow-500" />
+                            <img width="20" height="20" src="https://img.icons8.com/ios-filled/50/1A1A1A/data-pending.png" alt="data-pending" />
                         </div>
                         <div className="mt-2 text-3xl font-bold text-foreground">8</div>
                         <span className="text-xs text-warning">Requires Approval</span>
@@ -224,7 +249,7 @@ export default function Home() {
                     <div className="rounded-xl border border-gray-700 bg-panel p-6 shadow-sm">
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-muted">Payroll Status</span>
-                            <DollarSign size={20} className="text-green-500" />
+                            <img width="20" height="20" src="https://img.icons8.com/fluency-systems-filled/48/1A1A1A/money.png" alt="money" />
                         </div>
                         <div className="mt-2 text-3xl font-bold text-foreground">Pending</div>
                         <span className="text-xs text-muted">For Jan 2026</span>
@@ -241,7 +266,7 @@ export default function Home() {
                         <div className="rounded-xl border border-gray-700 bg-panel flex flex-col h-[500px]">
                             <div className="p-6 border-b border-gray-700 flex justify-between items-center bg-surface/50 rounded-t-xl">
                                 <div className="flex items-center gap-2">
-                                    <Building className="text-primary" size={20} />
+                                    <img width="20" height="20" src="https://img.icons8.com/ios/50/1A1A1A/building.png" alt="building" />
                                     <h3 className="font-bold text-foreground">Site Master</h3>
                                 </div>
                                 <button
@@ -252,7 +277,7 @@ export default function Home() {
                                 </button>
                             </div>
                             <div className="p-6 overflow-y-auto space-y-3 flex-1">
-                                {sites.map(site => (
+                                {filteredSites.map(site => (
                                     <div key={site.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-700 bg-surface hover:border-gray-500 transition-colors group">
                                         <Link href={`/sites/${site.id}`} className="flex-1 flex flex-col cursor-pointer">
                                             <span className="font-semibold text-foreground text-sm hover:text-primary transition-colors">{site.name}</span>
@@ -278,7 +303,7 @@ export default function Home() {
                         <div className="rounded-xl border border-gray-700 bg-panel flex flex-col h-[500px]">
                             <div className="p-6 border-b border-gray-700 flex justify-between items-center bg-surface/50 rounded-t-xl">
                                 <div className="flex items-center gap-2">
-                                    <Users className="text-blue-400" size={20} />
+                                    <img width="20" height="20" src="https://img.icons8.com/pulsar-line/48/1A1A1A/conference.png" alt="conference" />
                                     <h3 className="font-bold text-foreground">Employee Master</h3>
                                 </div>
                                 <button
@@ -289,7 +314,7 @@ export default function Home() {
                                 </button>
                             </div>
                             <div className="p-6 overflow-y-auto space-y-3 flex-1">
-                                {employees.map(emp => (
+                                {filteredEmployees.map(emp => (
                                     <div key={emp.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-700 bg-surface hover:border-gray-500 transition-colors">
                                         <Link href={`/engineers/${emp.id}`} className="flex-1 flex items-center gap-3 cursor-pointer">
                                             <div className="h-8 w-8 rounded-full bg-orange-100 text-black flex items-center justify-center font-bold text-xs border border-orange-200">
@@ -383,7 +408,10 @@ export default function Home() {
                             <span>/</span>
                             <span className="text-foreground">Dashboard</span>
                         </div>
-                        <h1 className="mt-1 text-2xl font-bold text-foreground">Site Management</h1>
+                        <h1 className="mt-1 text-2xl font-bold text-foreground flex items-center gap-2">
+                            <img width="28" height="28" src="https://img.icons8.com/ios/50/1A1A1A/road-worker.png" alt="road-worker" />
+                            Site Management
+                        </h1>
                     </div>
 
                     <button
@@ -409,20 +437,35 @@ export default function Home() {
                     >
                         My Assigned Sites
                     </button>
-                    <div className="ml-auto flex items-center gap-2 rounded-lg bg-surface px-3 py-1.5 border border-gray-700">
+                    <div className="ml-auto flex items-center gap-2 rounded-lg bg-surface px-3 py-1.5 border border-gray-700 focus-within:border-primary transition-colors">
                         <Search size={16} className="text-muted" />
-                        <span className="text-sm text-muted">Search sites...</span>
+                        <input
+                            type="text"
+                            placeholder="Search sites..."
+                            className="bg-transparent border-none text-sm text-foreground focus:outline-none placeholder:text-muted/60"
+                            onChange={(e) => handleDashboardSearch(e.target.value)}
+                            value={searchQuery}
+                        />
                     </div>
                 </div>
 
                 {/* Grid */}
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {filteredSites.map((site) => (
+                        // ... remaining grid content ...
                         <div key={site.id} className="group relative flex flex-col rounded-xl border border-gray-700 bg-panel shadow-sm transition-all hover:-translate-y-1 hover:border-primary/50">
                             <Link href={`/sites/${site.id}`} className="flex-1 p-6">
                                 <div className="mb-4 flex items-start justify-between">
-                                    <div className="rounded-lg bg-primary/10 p-3">
-                                        <Building className="text-primary" size={24} />
+                                    <div className="rounded-lg bg-primary/10 p-2">
+                                        <img
+                                            width="24"
+                                            height="24"
+                                            src={site.status === 'Planning'
+                                                ? "https://img.icons8.com/pulsar-line/48/1A1A1A/blueprint.png"
+                                                : "https://img.icons8.com/ios/50/1A1A1A/road-worker.png"
+                                            }
+                                            alt={site.status === 'Planning' ? "blueprint" : "road-worker"}
+                                        />
                                     </div>
                                     <span className={`rounded-lg px-2.5 py-0.5 text-xs font-medium border ${site.status === 'Active' ? 'bg-success/10 text-success border-success/20' :
                                         site.status === 'Completed' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
@@ -565,7 +608,7 @@ export default function Home() {
                 <div className="rounded-xl border border-gray-700 bg-panel overflow-hidden flex flex-col hover:border-blue-500/50 transition-colors shadow-lg">
                     <div className="p-6 bg-gradient-to-br from-panel to-surface border-b border-gray-700">
                         <div className="h-12 w-12 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 mb-4">
-                            <Activity size={24} />
+                            <img width="24" height="24" src="https://img.icons8.com/ios-filled/50/1A1A1A/id-verified.png" alt="id-verified" />
                         </div>
                         <h3 className="text-lg font-bold text-foreground">Site Engineer Attendance</h3>
                         <p className="text-sm text-muted mt-1">Manage logs and hours</p>
@@ -599,7 +642,7 @@ export default function Home() {
                 <div className="rounded-xl border border-gray-700 bg-panel overflow-hidden flex flex-col hover:border-orange-500/50 transition-colors shadow-lg">
                     <div className="p-6 bg-gradient-to-br from-panel to-surface border-b border-gray-700">
                         <div className="h-12 w-12 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500 mb-4">
-                            <Package size={24} />
+                            <img width="24" height="24" src="https://img.icons8.com/quill/100/1A1A1A/portraits.png" alt="portraits" />
                         </div>
                         <h3 className="text-lg font-bold text-foreground">Extra Material Request</h3>
                         <p className="text-sm text-muted mt-1">Request supplies for Site</p>
@@ -610,7 +653,7 @@ export default function Home() {
                             <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-gray-500"></div> Assigned to Project Manager</li>
                         </ul>
                         <Link href="/materials/request" className="mt-auto w-full flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 rounded-lg transition-colors">
-                            <Package size={18} /> Create Request
+                            <img width="18" height="18" src="https://img.icons8.com/quill/100/FFFFFF/portraits.png" alt="portraits" /> Create Request
                         </Link>
                     </div>
                 </div>
@@ -619,7 +662,7 @@ export default function Home() {
                 <div className="rounded-xl border border-gray-700 bg-panel overflow-hidden flex flex-col hover:border-purple-500/50 transition-colors shadow-lg">
                     <div className="p-6 bg-gradient-to-br from-panel to-surface border-b border-gray-700">
                         <div className="h-12 w-12 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500 mb-4">
-                            <FileText size={24} />
+                            <img width="24" height="24" src="https://img.icons8.com/ios-filled/50/1A1A1A/secured-letter.png" alt="secured-letter" />
                         </div>
                         <h3 className="text-lg font-bold text-foreground">Employee Leave</h3>
                         <p className="text-sm text-muted mt-1">Apply for leaves</p>
@@ -630,7 +673,7 @@ export default function Home() {
                             <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-gray-500"></div> Status Tracking</li>
                         </ul>
                         <Link href="/leave" className="mt-auto w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-lg transition-colors">
-                            <FileText size={18} /> Apply Now
+                            <img width="18" height="18" src="https://img.icons8.com/ios-filled/50/FFFFFF/secured-letter.png" alt="secured-letter" /> Apply Now
                         </Link>
                     </div>
                 </div>

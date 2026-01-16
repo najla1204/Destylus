@@ -6,14 +6,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Briefcase, Package, Users, Settings, HardHat, ClipboardCheck, LogOut, MapPin, FileText } from "lucide-react";
 
 const menuItems = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard }, // Updated href to match new path
-  { name: "Sites", href: "/sites", icon: MapPin },
+  { name: "Dashboard", href: "/dashboard", icon: "https://img.icons8.com/fluency-systems-filled/48/1A1A1A/dashboard-layout.png" }, // Updated href to match new path
+  { name: "Sites", href: "/sites", icon: "https://img.icons8.com/ios-filled/50/building.png" },
   { name: "Projects", href: "/projects", icon: Briefcase },
-  { name: "Project Managers", href: "/project-managers", icon: Briefcase },
-  { name: "Engineers", href: "/engineers", icon: Users },
-  { name: "Attendance", href: "/attendance", icon: ClipboardCheck },
-  { name: "Leave", href: "/leave", icon: FileText },
-  { name: "Settings", href: "/settings/profile", icon: Settings },
+  { name: "Project Managers", href: "/project-managers", icon: "https://img.icons8.com/pulsar-line/48/1A1A1A/project-manager.png" },
+  { name: "Engineers", href: "/engineers", icon: "https://img.icons8.com/ios-filled/50/1A1A1A/engineer.png" },
+  { name: "Attendance", href: "/attendance", icon: "https://img.icons8.com/fluency-systems-filled/48/1A1A1A/attendance-mark.png" },
+  { name: "Leave", href: "/leave", icon: "https://img.icons8.com/hatch/64/1A1A1A/calendar.png" },
+  { name: "Settings", href: "/settings/profile", icon: "https://img.icons8.com/ios-glyphs/30/1A1A1A/settings--v1.png" },
 ];
 
 export default function Sidebar() {
@@ -44,7 +44,7 @@ export default function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 z-50 flex h-screen w-[260px] flex-col border-r border-gray-700 bg-panel transition-transform duration-300">
       <div className="flex h-16 shrink-0 items-center justify-start gap-3 border-b border-gray-700 px-6">
-        <HardHat className="text-primary" size={32} />
+        <img width="32" height="32" src="https://img.icons8.com/hatch/64/FAB005/skyscrapers.png" alt="skyscrapers" />
         <span className="text-xl font-bold tracking-tight text-foreground">CivilERP</span>
       </div>
 
@@ -60,7 +60,11 @@ export default function Sidebar() {
                 : "text-muted hover:bg-surface hover:text-foreground"
                 }`}
             >
-              <item.icon size={20} />
+              {typeof item.icon === "string" ? (
+                <img src={item.icon} alt={item.name} className="h-5 w-5 object-contain" />
+              ) : (
+                <item.icon size={20} />
+              )}
               <span>{item.name}</span>
             </Link>
           );

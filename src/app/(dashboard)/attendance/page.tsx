@@ -306,8 +306,8 @@ export default function AttendancePage() {
                     href="/attendance/timesheet"
                     className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:border-blue-500 hover:shadow-md transition-all flex items-center gap-4 group"
                 >
-                    <div className="bg-blue-50 text-blue-600 p-3 rounded-lg group-hover:scale-110 transition-transform">
-                        <Clock size={24} />
+                    <div className="bg-blue-50 p-3 rounded-lg group-hover:scale-110 transition-transform">
+                        <img width="24" height="24" src="https://img.icons8.com/quill/100/1A1A1A/overtime.png" alt="overtime" />
                     </div>
                     <div>
                         <h3 className="font-bold text-gray-900">Timesheet & Hours</h3>
@@ -319,8 +319,8 @@ export default function AttendancePage() {
                     href="/leave"
                     className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:border-orange-500 hover:shadow-md transition-all flex items-center gap-4 group"
                 >
-                    <div className="bg-orange-50 text-orange-600 p-3 rounded-lg group-hover:scale-110 transition-transform">
-                        <Fingerprint size={24} />
+                    <div className="bg-orange-50 p-3 rounded-lg group-hover:scale-110 transition-transform">
+                        <img width="24" height="24" src="https://img.icons8.com/quill/100/1A1A1A/document.png" alt="document" />
                     </div>
                     <div>
                         <h3 className="font-bold text-gray-900">Leave Requests</h3>

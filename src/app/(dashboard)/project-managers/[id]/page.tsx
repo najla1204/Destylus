@@ -80,7 +80,9 @@ export default function ProjectManagerDetailsPage() {
 
                 {/* 1. MANAGED SITES */}
                 <div className="space-y-4">
-                    <h3 className="font-bold text-foreground flex items-center gap-2"><MapPin size={20} className="text-primary" /> Assigned Sites</h3>
+                    <h3 className="font-bold text-foreground flex items-center gap-2">
+                        <img width="20" height="20" src="https://img.icons8.com/ios/50/1A1A1A/road-worker.png" alt="road-worker" /> Assigned Sites
+                    </h3>
                     <div className="grid gap-4">
                         {pm.activeSites.map(site => (
                             <Link key={site.id} href={`/sites/${site.id}`} className="block rounded-xl border border-gray-700 bg-panel p-4 hover:border-primary/50 transition-colors">

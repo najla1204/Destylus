@@ -204,7 +204,7 @@ export default function ProjectManagersPage() {
                             <div>
                                 <p className="text-xs text-muted">Active Sites</p>
                                 <p className="font-medium text-foreground flex items-center gap-1">
-                                    <MapPin size={12} className="text-primary" /> {pm.activeSites} Projects
+                                    <img width="14" height="14" src="https://img.icons8.com/ios/50/1A1A1A/road-worker.png" alt="road-worker" /> {pm.activeSites} Projects
                                 </p>
                             </div>
                             <div>
