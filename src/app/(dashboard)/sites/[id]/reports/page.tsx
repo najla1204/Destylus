@@ -97,13 +97,15 @@ export default function SiteReportsPage({ params }: { params: Promise<{ id: stri
         };
         resolveParams();
 
-        // Set default dates (Current Month)
-        const date = new Date();
-        const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-        const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-        setStartDate(firstDay.toISOString().split('T')[0]);
-        setEndDate(lastDay.toISOString().split('T')[0]);
-    }, [params]);
+        // Set default dates (Current Month) if not set
+        if (!startDate) {
+            const date = new Date();
+            const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+            const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+            setStartDate(firstDay.toISOString().split('T')[0]);
+            setEndDate(lastDay.toISOString().split('T')[0]);
+        }
+    }, [params, startDate]);
 
     const handleGenerate = () => {
         if (!startDate || !endDate) return;

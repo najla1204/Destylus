@@ -73,7 +73,11 @@ export default function ProjectManagersPage() {
     useEffect(() => {
         const savedPMs = localStorage.getItem("destylus_dashboard_pms_v2");
         if (savedPMs) {
-            setPms(JSON.parse(savedPMs));
+            const parsed = JSON.parse(savedPMs);
+            // Only update if data is different to avoid effect loop/warning
+            if (JSON.stringify(parsed) !== JSON.stringify(pms)) {
+                setPms(parsed);
+            }
         } else {
             localStorage.setItem("destylus_dashboard_pms_v2", JSON.stringify(PROJECT_MANAGERS));
         }

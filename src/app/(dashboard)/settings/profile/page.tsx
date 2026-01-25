@@ -48,12 +48,16 @@ export default function ProfilePage() {
 
         if (savedProfile) {
             const parsed = JSON.parse(savedProfile);
-            setProfile(parsed);
-            setFormData(parsed);
+            if (JSON.stringify(parsed) !== JSON.stringify(profile)) {
+                setProfile(parsed);
+                setFormData(parsed);
+            }
         } else {
             const initialProfile = role === "Project Manager" ? pmProfile : engineerProfile;
-            setProfile(initialProfile);
-            setFormData(initialProfile);
+            if (JSON.stringify(initialProfile) !== JSON.stringify(profile)) {
+                setProfile(initialProfile);
+                setFormData(initialProfile);
+            }
         }
     }, []);
 

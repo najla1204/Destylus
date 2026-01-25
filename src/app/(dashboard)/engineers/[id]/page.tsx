@@ -68,9 +68,12 @@ export default function EmployeeDetailsPage() {
 
     useEffect(() => {
         if (id && MOCK_EMPLOYEES[id]) {
-            setEmployee(MOCK_EMPLOYEES[id]);
+            const emp = MOCK_EMPLOYEES[id];
+            if (JSON.stringify(emp) !== JSON.stringify(employee)) {
+                setEmployee(emp);
+            }
         }
-    }, [id]);
+    }, [id, employee]);
 
     if (!employee) {
         return (

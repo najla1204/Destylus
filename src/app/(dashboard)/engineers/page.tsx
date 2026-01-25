@@ -2,7 +2,20 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Search, Filter, Phone, Mail, MapPin, User, ChevronRight, Briefcase } from "lucide-react";
+import { Search, Filter, Phone, Mail, MapPin, User, ChevronRight, Briefcase, Clock, CheckCircle, XCircle } from "lucide-react";
+
+interface AttendanceLog {
+    _id: string;
+    employeeName: string;
+    site: string;
+    role: string;
+    status: 'checked-in' | 'checked-out';
+    checkInTime: string;
+    checkOutTime?: string;
+    inTimePhoto?: string;
+    outTimePhoto?: string;
+    approvalStatus: 'pending' | 'approved' | 'rejected';
+}
 
 // Mock Data Source
 const ALL_ENGINEERS = [
@@ -16,11 +29,87 @@ export default function EngineersPage() {
     const [userRole, setUserRole] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
 
+    // Attendance State
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [teamAttendance, setTeamAttendance] = useState<any[]>([]);
+    const [loadingAttendance, setLoadingAttendance] = useState(false);
+
     useEffect(() => {
         // In a real app, this would come from a secure context or API
         const role = localStorage.getItem("userRole") || "Engineer";
-        setUserRole(role);
-    }, []);
+        if (role !== userRole) {
+            setUserRole(role);
+        }
+
+        // Fetch Team Attendance for PM
+        const fetchTeamAttendance = async () => {
+            if (role !== "Project Manager") return;
+
+            setLoadingAttendance(true);
+            try {
+                // In a real app, PM would see all their sites. 
+                // For demo, we just fetch ALL pending or active attendance to verify workflow
+                const res = await fetch(`/api/attendance`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setTeamAttendance(data.attendanceLogs || []);
+                }
+            } catch (e) {
+                console.error("Failed to fetch team attendance", e);
+            } finally {
+                setLoadingAttendance(false);
+            }
+        };
+
+        fetchTeamAttendance();
+    }, [userRole]);
+
+    const handleApproveAttendance = async (logId: string) => {
+        try {
+            const res = await fetch(`/api/attendance/${logId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'approved' })
+            });
+            if (res.ok) {
+                // Refresh locally for instant feedback
+                const updated = teamAttendance.map(log =>
+                    log._id === logId ? { ...log, approvalStatus: 'approved' } : log
+                );
+                setTeamAttendance(updated);
+            } else {
+                alert("Failed to approve attendance. Please try again.");
+            }
+        } catch (e) {
+            console.error("Error approving", e);
+            alert("An error occurred while approving attendance.");
+        }
+    };
+
+    const handleRejectAttendance = async (logId: string) => {
+        const reason = prompt("Enter rejection reason:");
+        if (reason === null) return; // Cancelled
+
+        try {
+            const res = await fetch(`/api/attendance/${logId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'rejected', rejectionReason: reason || "No reason provided" })
+            });
+            if (res.ok) {
+                // Refresh locally for instant feedback
+                const updated = teamAttendance.map(log =>
+                    log._id === logId ? { ...log, approvalStatus: 'rejected' } : log
+                );
+                setTeamAttendance(updated);
+            } else {
+                alert("Failed to reject attendance. Please try again.");
+            }
+        } catch (e) {
+            console.error("Error rejecting", e);
+            alert("An error occurred while rejecting attendance.");
+        }
+    };
 
     // Filter Logic based on Role
     const getVisibleEngineers = () => {
@@ -77,6 +166,90 @@ export default function EngineersPage() {
                     </button>
                 )}
             </div>
+
+            {/* Attendance Approval Section (PM Only) */}
+            {userRole === "Project Manager" && (
+                <div className="mb-8 rounded-xl border border-gray-700 bg-panel p-6 shadow-sm">
+                    <h2 className="mb-4 text-xl font-bold text-foreground flex items-center gap-2">
+                        <Clock className="text-primary" size={24} />
+                        Attendance Approvals
+                    </h2>
+
+                    {loadingAttendance ? (
+                        <div className="text-center py-4 text-muted">Loading attendance...</div>
+                    ) : teamAttendance.length === 0 ? (
+                        <div className="text-center py-6 text-muted border border-dashed border-gray-700 rounded-lg">
+                            No attendance records found today.
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto rounded-lg border border-gray-700">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-surface text-muted">
+                                    <tr>
+                                        <th className="px-4 py-3">Engineer</th>
+                                        <th className="px-4 py-3">Site</th>
+                                        <th className="px-4 py-3">Time</th>
+                                        <th className="px-4 py-3">Geotag</th>
+                                        <th className="px-4 py-3">Status</th>
+                                        <th className="px-4 py-3 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-700">
+                                    {teamAttendance.map((log) => (
+                                        <tr key={log._id}>
+                                            <td className="px-4 py-3 font-medium text-foreground">{log.employeeName}</td>
+                                            <td className="px-4 py-3 text-muted">{log.site}</td>
+                                            <td className="px-4 py-3 text-muted">
+                                                {new Date(log.checkInTime).toLocaleTimeString()}
+                                                {log.checkOutTime && ` - ${new Date(log.checkOutTime).toLocaleTimeString()}`}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {log.inTimePhoto ? (
+                                                    <a href={log.inTimePhoto} target="_blank" rel="noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                                                        <MapPin size={14} /> View
+                                                    </a>
+                                                ) : <span className="text-muted">-</span>}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <span className={`px-2 py-1 rounded-full text-xs font-bold ${log.approvalStatus === 'approved' ? 'bg-[#d1fae5] text-black' :
+                                                        log.approvalStatus === 'rejected' ? 'bg-[#fee2e2] text-black' :
+                                                            'bg-[#fef3c7] text-black'
+                                                    }`}>
+                                                    {log.approvalStatus === 'approved' ? 'Approved' :
+                                                        log.approvalStatus === 'rejected' ? 'Rejected' : 'Pending'}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                {log.approvalStatus === 'pending' ? (
+                                                    <div className="flex justify-end gap-2">
+                                                        <button
+                                                            onClick={() => handleApproveAttendance(log._id)}
+                                                            className="p-1 rounded bg-success/20 text-success hover:bg-success/30 transition-colors" title="Approve"
+                                                        >
+                                                            <CheckCircle size={18} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleRejectAttendance(log._id)}
+                                                            className="p-1 rounded bg-red-500/20 text-red-500 hover:bg-red-500/30 transition-colors" title="Reject"
+                                                        >
+                                                            <XCircle size={18} />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <span className={`text-sm font-bold ${log.approvalStatus === 'approved' ? 'text-success' : 'text-red-500'
+                                                        }`}>
+                                                        {log.approvalStatus === 'approved' ? 'Approved' : 'Rejected'}
+                                                    </span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* List */}
             <div className="grid gap-4">

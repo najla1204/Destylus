@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
     TrendingUp,
@@ -81,7 +81,7 @@ const INITIAL_EMPLOYEES: Employee[] = [
     { id: "3", name: "Sarah Connor", role: "Safety Officer", site: "River Bridge Expansion", status: "Active" },
 ];
 
-export default function Home() {
+function DashboardContent() {
     const [userRole, setUserRole] = useState<string>("");
     const [userName, setUserName] = useState<string>("");
     const searchParams = useSearchParams();
@@ -488,7 +488,7 @@ export default function Home() {
                                     </div>
                                     <div className="flex items-center gap-2 text-sm text-muted">
                                         <Calendar size={16} />
-                                        <span>Started: {new Date(site.startDate || Date.now()).toLocaleDateString()}</span>
+                                        <span>Started: {site.startDate ? new Date(site.startDate).toLocaleDateString() : 'Pending'}</span>
                                     </div>
                                 </div>
                             </Link>
@@ -680,5 +680,13 @@ export default function Home() {
 
             </div>
         </div>
+    );
+}
+
+export default function Home() {
+    return (
+        <Suspense fallback={<div className="flex h-screen items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div></div>}>
+            <DashboardContent />
+        </Suspense>
     );
 }
