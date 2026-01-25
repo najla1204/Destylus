@@ -39,7 +39,7 @@ export default function SiteIssuesPage() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const newIssue: Issue = {
-            id: Date.now().toString(),
+            id: Math.random().toString(36).substring(2, 9),
             description,
             date: new Date().toISOString().split('T')[0],
             status: "Open",

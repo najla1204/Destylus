@@ -24,15 +24,20 @@ export default function LeavePage() {
 
     useEffect(() => {
         const role = localStorage.getItem("userRole") || "Engineer";
-        setUserRole(role);
+        if (role !== userRole) {
+            setUserRole(role);
+        }
 
         const savedLeaves = localStorage.getItem("destylus_dashboard_leaves_v2");
         if (savedLeaves) {
-            setRequests(JSON.parse(savedLeaves));
+            const parsed = JSON.parse(savedLeaves);
+            if (JSON.stringify(parsed) !== JSON.stringify(requests)) {
+                setRequests(parsed);
+            }
         } else {
             localStorage.setItem("destylus_dashboard_leaves_v2", JSON.stringify(MOCK_LEAVE_REQUESTS));
         }
-    }, []);
+    }, [userRole]);
 
     const handleAction = (id: number, status: string) => {
         const updated = requests.map(req => req.id === id ? { ...req, status } : req);

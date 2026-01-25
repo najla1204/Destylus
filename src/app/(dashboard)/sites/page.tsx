@@ -44,7 +44,10 @@ export default function SitesPage() {
     useEffect(() => {
         const savedSites = localStorage.getItem("destylus_dashboard_sites_v3");
         if (savedSites) {
-            setSites(JSON.parse(savedSites));
+            const parsed = JSON.parse(savedSites);
+            if (JSON.stringify(parsed) !== JSON.stringify(sites)) {
+                setSites(parsed);
+            }
         } else {
             localStorage.setItem("destylus_dashboard_sites_v3", JSON.stringify(initialSites));
         }

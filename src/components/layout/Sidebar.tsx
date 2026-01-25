@@ -25,8 +25,10 @@ export default function Sidebar() {
     // Ensure this runs only on the client
     const name = localStorage.getItem("userName") || "Admin User";
     const role = localStorage.getItem("userRole") || "Site Manager";
-    setUserInfo({ name, role });
-  }, []);
+    if (name !== userInfo.name || role !== userInfo.role) {
+      setUserInfo({ name, role });
+    }
+  }, [userInfo]);
 
   // Define role-based access for menu items
   const getFilteredMenuItems = () => {

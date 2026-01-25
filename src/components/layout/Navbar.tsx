@@ -5,17 +5,19 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 
-interface LeaveRequest {
-    id: number;
-    name: string;
-    role: string;
-    type: string;
-    from: string;
-    status: string;
+// Reusing AttendanceType here or we can be loose with type as it varies between Leave and Attendance
+interface NotificationItem {
+    id: string; // or number, aligning with DB _id
+    type: 'leave' | 'attendance';
+    title: string;
+    description: string;
+    time: string;
+    link: string;
+    actorName: string;
 }
 
 export default function Navbar() {
-    const [notifications, setNotifications] = useState<LeaveRequest[]>([]);
+    const [notifications, setNotifications] = useState<NotificationItem[]>([]);
     const [showDropdown, setShowDropdown] = useState(false);
     const [userRole, setUserRole] = useState("");
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -36,30 +38,59 @@ export default function Navbar() {
     useEffect(() => {
         // Run only on client
         const role = localStorage.getItem("userRole") || "";
-        setUserRole(role);
+        if (role !== userRole) {
+            setUserRole(role);
+        }
         // ... existing useEffect content ...
 
-        if (role === "HR Manager") {
-            const updateNotifications = () => {
-                const savedLeaves = localStorage.getItem("destylus_dashboard_leaves_v2");
-                if (savedLeaves) {
-                    const allRequests = JSON.parse(savedLeaves);
-                    const pending = allRequests.filter((r: LeaveRequest) => r.status === "Pending");
-                    setNotifications(pending);
+        if (role === "Project Manager") {
+            const fetchNotifications = async () => {
+                try {
+                    // 1. Fetch Leaves (Local Mock for now, or imagine API)
+                    // In real app: const resLeaves = await fetch('/api/leaves?status=pending');
+                    const savedLeaves = localStorage.getItem("destylus_dashboard_leaves_v2");
+                    const leaveNotifs: NotificationItem[] = savedLeaves ? JSON.parse(savedLeaves)
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        .filter((r: any) => r.status === "Pending")
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        .map((r: any) => ({
+                            id: `leave-${r.id}`,
+                            type: 'leave',
+                            title: 'New Leave Request',
+                            description: `${r.name} (${r.role}) - ${r.type}`,
+                            time: r.from,
+                            link: '/leave',
+                            actorName: r.name
+                        })) : [];
+
+                    // 2. Fetch Attendance (Real API)
+                    const resAttendance = await fetch('/api/attendance?approvalStatus=pending');
+                    let attendanceNotifs: NotificationItem[] = [];
+                    if (resAttendance.ok) {
+                        const data = await resAttendance.json();
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        attendanceNotifs = (data.attendanceLogs || []).map((log: any) => ({
+                            id: `att-${log._id}`,
+                            type: 'attendance',
+                            title: 'Attendance Approval',
+                            description: `${log.employeeName} - Checked In at ${log.site}`,
+                            time: new Date(log.checkInTime).toLocaleTimeString(),
+                            link: '/engineers', // or sites/[id]
+                            actorName: log.employeeName
+                        }));
+                    }
+
+                    setNotifications([...leaveNotifs, ...attendanceNotifs]);
+
+                } catch (e) {
+                    console.error("Failed to fetch notifications", e);
                 }
             };
 
-            updateNotifications();
-
-            // Listen for storage changes in other tabs
-            window.addEventListener('storage', updateNotifications);
-            // Polling as a fallback for the same tab (since storage event doesn't fire in the same tab)
-            const interval = setInterval(updateNotifications, 3000);
-
-            return () => {
-                window.removeEventListener('storage', updateNotifications);
-                clearInterval(interval);
-            };
+            fetchNotifications();
+            // Poll every 10 seconds
+            const interval = setInterval(fetchNotifications, 10000);
+            return () => clearInterval(interval);
         }
     }, [userRole]);
 
@@ -134,24 +165,24 @@ export default function Navbar() {
                                         {notifications.map((notif) => (
                                             <Link
                                                 key={notif.id}
-                                                href="/leave"
+                                                href={notif.link}
                                                 onClick={() => setShowDropdown(false)}
                                                 className="block p-4 transition-colors hover:bg-surface/50 border-l-2 border-transparent hover:border-primary"
                                             >
                                                 <div className="flex items-start gap-3">
                                                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-100 text-[10px] font-bold text-black border border-orange-200">
-                                                        {notif.name.charAt(0)}
+                                                        {notif.actorName.charAt(0)}
                                                     </div>
                                                     <div className="flex-1 space-y-1">
                                                         <p className="text-xs font-bold text-foreground">
-                                                            New Leave Request
+                                                            {notif.title}
                                                         </p>
                                                         <p className="text-[11px] text-muted leading-relaxed">
-                                                            <span className="font-semibold text-foreground/80">{notif.name}</span> ({notif.role}) has applied for {notif.type}.
+                                                            {notif.description}
                                                         </p>
                                                         <div className="flex items-center gap-1.5 text-[10px] text-muted pt-1">
                                                             <Calendar size={10} className="text-primary" />
-                                                            <span>From: {notif.from}</span>
+                                                            <span>{notif.time}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -166,8 +197,8 @@ export default function Navbar() {
                                 onClick={() => setShowDropdown(false)}
                                 className="flex items-center justify-center gap-2 border-t border-gray-700 p-3 text-xs font-bold text-primary hover:bg-surface transition-colors"
                             >
-                                View All Requests
-                                <ChevronRight size={14} />
+                                <span className="text-xs text-muted">View relevant sections</span>
+                                {/* <ChevronRight size={14} /> */}
                             </Link>
                         </div>
                     )}

@@ -52,7 +52,7 @@ export default function PettyCashPage() {
     const handleAddAllowance = (e: React.FormEvent) => {
         e.preventDefault();
         const newTransaction: Transaction = {
-            id: Date.now().toString(),
+            id: Math.random().toString(36).substring(2, 9),
             type: "IN",
             amount: parseFloat(amount),
             description: description || "Cash Allowance",
@@ -66,7 +66,7 @@ export default function PettyCashPage() {
     const handleAddExpense = (e: React.FormEvent) => {
         e.preventDefault();
         const newTransaction: Transaction = {
-            id: Date.now().toString(),
+            id: Math.random().toString(36).substring(2, 9),
             type: "OUT",
             amount: parseFloat(amount),
             description: description || "Expense",

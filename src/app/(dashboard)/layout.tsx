@@ -3,6 +3,8 @@
 import Navbar from "@/components/layout/Navbar";
 import Sidebar from "@/components/layout/Sidebar";
 
+import { Suspense } from "react";
+
 export default function DashboardLayout({
     children,
 }: {
@@ -12,7 +14,9 @@ export default function DashboardLayout({
         <div className="flex min-h-screen">
             <Sidebar />
             <main className="ml-[260px] flex min-h-screen flex-1 flex-col bg-background">
-                <Navbar />
+                <Suspense fallback={<div className="h-16 border-b border-gray-700 bg-background" />}>
+                    <Navbar />
+                </Suspense>
                 <div className="flex-1 overflow-y-auto p-8">{children}</div>
             </main>
         </div>
