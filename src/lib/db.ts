@@ -126,4 +126,90 @@ sessionSchema.index({ employeeId: 1, isActive: 1 });
 
 const Session = mongoose.models.Session || mongoose.model('Session', sessionSchema);
 
-export { Attendance, User, Session };
+// Site schema
+const siteSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  locationName: { type: String, required: true },
+  locationLink: { type: String },
+  status: {
+    type: String,
+    enum: ['Active', 'Completed', 'Planning', 'Pending'],
+    default: 'Active'
+  },
+  budget: { type: Number, default: 0 },
+  managers: [{ type: String }],
+  engineers: [{ type: String }]
+}, { timestamps: true });
+
+const Site = mongoose.models.Site || mongoose.model('Site', siteSchema);
+
+// Labour schema
+const labourSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  mobile: { type: String },
+  workerType: {
+    type: String,
+    enum: ['Skilled', 'Unskilled', 'Supervisor'],
+    required: true
+  },
+  siteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Site', required: true }
+}, { timestamps: true });
+
+labourSchema.index({ siteId: 1 });
+
+const Labour = mongoose.models.Labour || mongoose.model('Labour', labourSchema);
+
+// Material schema
+const materialSchema = new mongoose.Schema({
+  item: { type: String, required: true },
+  quantity: { type: Number, required: true },
+  unit: { type: String, required: true },
+  siteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Site', required: true }
+}, { timestamps: true });
+
+materialSchema.index({ siteId: 1 });
+
+const Material = mongoose.models.Material || mongoose.model('Material', materialSchema);
+
+// Issue schema
+const issueSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  description: { type: String },
+  status: {
+    type: String,
+    enum: ['Open', 'In Progress', 'Resolved'],
+    default: 'Open'
+  },
+  priority: {
+    type: String,
+    enum: ['Low', 'Medium', 'High', 'Critical'],
+    default: 'Medium'
+  },
+  raisedBy: { type: String },
+  raisedByRole: { type: String },
+  siteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Site', required: true }
+}, { timestamps: true });
+
+issueSchema.index({ siteId: 1 });
+
+const Issue = mongoose.models.Issue || mongoose.model('Issue', issueSchema);
+
+// PettyCash schema
+const pettyCashSchema = new mongoose.Schema({
+  siteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Site', required: true },
+  title: { type: String, required: true },
+  amount: { type: Number, required: true },
+  type: {
+    type: String,
+    enum: ['Allocation', 'Expense'],
+    required: true
+  },
+  loggedBy: { type: String, required: true },
+  date: { type: Date, default: Date.now }
+}, { timestamps: true });
+
+pettyCashSchema.index({ siteId: 1 });
+
+const PettyCashTransaction = mongoose.models.PettyCashTransaction || mongoose.model('PettyCashTransaction', pettyCashSchema);
+
+export { Attendance, User, Session, Site, Labour, Material, Issue, PettyCashTransaction };

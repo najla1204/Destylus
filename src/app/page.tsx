@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Lock, User, Building2 } from "lucide-react";
+import { Eye, EyeOff, Lock, User, Building2, AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,39 +19,18 @@ export default function LoginPage() {
 
     // Simulate network delay for a smoother feel
     setTimeout(() => {
-      // Hardcoded credentials as per requirements
+      // Hardcoded HR credentials as per requirements
       const credentials = {
-        engineer: { user: "engineer", pass: "engineer", role: "Engineer" },
-        pm: { user: "pro1", pass: "pro1", role: "Project Manager" },
-        hr: { user: "HR1", pass: "HR1", role: "HR Manager" },
+        hr: { user: "rajakumaran", email: "rajakumaran.work@gmail.com", pass: "rajaraja27", role: "HR Manager" },
       };
 
-      const validEngineer =
-        username === credentials.engineer.user &&
-        password === credentials.engineer.pass;
-      const validPM =
-        username === credentials.pm.user && password === credentials.pm.pass;
       const validHR =
-        (username === credentials.hr.user || username === "hr1") && (password === credentials.hr.pass || password === "hr1");
+        (username === credentials.hr.user || username === credentials.hr.email) && password === credentials.hr.pass;
 
-      if (validEngineer || validPM || validHR) {
+      if (validHR) {
         // In a real app, you'd set a cookie or token here
-        let role = "";
-        let name = "";
-
-        if (validEngineer) {
-          role = credentials.engineer.role;
-          name = "Engineer User";
-        } else if (validPM) {
-          role = credentials.pm.role;
-          name = "Project Manager";
-        } else if (validHR) {
-          role = credentials.hr.role;
-          name = "HR Manager";
-        }
-
-        localStorage.setItem("userRole", role);
-        localStorage.setItem("userName", name);
+        localStorage.setItem("userRole", credentials.hr.role);
+        localStorage.setItem("userName", "HR Manager");
 
         router.push("/dashboard");
       } else {
@@ -62,153 +41,192 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-gray-900/5">
-        <div className="bg-primary p-8 text-center bg-gray-900">
-          {/* Logo or icon can go here */}
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
-            <Building2 className="h-8 w-8 text-white" />
+    <div 
+      className="flex min-h-screen items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
+      style={{
+        backgroundImage: `url('https://images.unsplash.com/photo-1541888087405-eb81f84d6b67?q=80&w=2671&auto=format&fit=crop')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      {/* Dark Overlay for depth and contrast */}
+      <div className="absolute inset-0 bg-zinc-950/85 backdrop-blur-sm z-0"></div>
+
+      <div className="w-full max-w-md space-y-8 relative z-10 bg-zinc-900/60 p-8 sm:p-10 rounded-[2rem] shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] border border-white/10 backdrop-blur-md">
+        <div>
+          {/* Logo / Brand Accent */}
+          <div className="mx-auto h-16 w-16 bg-[#ffb600] rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(255,182,0,0.25)]">
+            <Building2 className="h-8 w-8 text-black" strokeWidth={2.5} />
           </div>
-          <h1 className="text-2xl font-bold text-white">Destylus Civil</h1>
-          <p className="mt-2 text-primary-foreground/80 text-gray-400">
+          <h1 className="mt-8 text-center text-3xl font-extrabold text-white tracking-tight">
+            Destylus Civil
+          </h1>
+          <p className="mt-2 text-center text-sm text-zinc-400">
             Enterprise Resource Planning
           </p>
         </div>
 
-        <div className="p-8">
+        <div className="pt-2">
           <form onSubmit={handleLogin} className="space-y-6">
-            <div>
-              <label
-                htmlFor="username"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Username / Email
-              </label>
-              <div className="relative mt-2">
-                <input
-                  id="username"
-                  type="text"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="block w-full rounded-lg border border-gray-300 bg-gray-50 py-3 pl-10 pr-3 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm"
-                  placeholder="Enter your username"
-                />
-                <User className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Password
-              </label>
-              <div className="relative mt-2">
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full rounded-lg border border-gray-300 bg-gray-50 py-3 pl-10 pr-10 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm"
-                  placeholder="••••••••"
-                />
-                <Lock className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600"
+            <div className="space-y-5">
+              {/* Username / Email Field */}
+              <div>
+                <label
+                  htmlFor="username"
+                  className="block text-sm font-medium text-zinc-300 mb-2"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
+                  Username / Email
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none transition-colors group-focus-within:text-[#ffb600]">
+                    <User className="h-5 w-5 text-zinc-500 group-focus-within:text-[#ffb600] transition-colors" />
+                  </div>
+                  <input
+                    id="username"
+                    type="text"
+                    required
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="block w-full rounded-xl border border-white/10 bg-zinc-950/50 py-3 pl-11 pr-3 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#ffb600]/80 focus:border-transparent transition-all sm:text-sm shadow-inner"
+                    placeholder="Enter your username"
+                  />
+                </div>
+              </div>
+
+              {/* Password Field */}
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-zinc-300 mb-2"
+                >
+                  Password
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none transition-colors group-focus-within:text-[#ffb600]">
+                    <Lock className="h-5 w-5 text-zinc-500 group-focus-within:text-[#ffb600] transition-colors" />
+                  </div>
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="block w-full rounded-xl border border-white/10 bg-zinc-950/50 py-3 pl-11 pr-10 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#ffb600]/80 focus:border-transparent transition-all sm:text-sm shadow-inner"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center transition-opacity hover:opacity-80"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5 text-zinc-400 hover:text-white transition-colors" />
+                    ) : (
+                      <Eye className="h-5 w-5 text-zinc-400 hover:text-white transition-colors" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between mt-2">
+                <div className="flex items-center">
+                  <input
+                    id="remember-me"
+                    name="remember-me"
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-zinc-700 bg-zinc-900/50 text-[#ffb600] focus:ring-[#ffb600] focus:ring-offset-zinc-900/60"
+                  />
+                  <label
+                    htmlFor="remember-me"
+                    className="ml-2 block text-sm text-zinc-300"
+                  >
+                    Remember me
+                  </label>
+                </div>
+
+                <div className="text-sm">
+                  <a
+                    href="#"
+                    className="font-medium text-[#ffb600] hover:text-[#ffc833] transition-colors"
+                  >
+                    Forgot password?
+                  </a>
+                </div>
+              </div>
+
+              {error && (
+                <div className="p-4 rounded-xl backdrop-blur-md bg-red-500/10 border border-red-500/20">
+                  <div className="flex items-center">
+                    <AlertCircle className="h-4 w-4 mr-2 text-red-400" />
+                    <span className="text-sm tracking-wide text-red-200">
+                      {error}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-4">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-xl text-black bg-[#ffb600] hover:bg-[#ffc833] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900 focus:ring-[#ffb600] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed uppercase tracking-wider shadow-[0_0_20px_rgba(255,182,0,0.15)] hover:shadow-[0_0_25px_rgba(255,182,0,0.3)]"
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-black mr-2"></div>
+                      Signing in...
+                    </>
                   ) : (
-                    <Eye className="h-5 w-5" />
+                    "Sign in securely"
                   )}
                 </button>
               </div>
             </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <label
-                  htmlFor="remember-me"
-                  className="ml-2 block text-sm text-gray-900"
-                >
-                  Remember me
-                </label>
-              </div>
-
-              <div className="text-sm">
-                <a
-                  href="#"
-                  className="font-medium text-blue-600 hover:text-blue-500"
-                >
-                  Forgot password?
-                </a>
-              </div>
-            </div>
-
-            {error && (
-              <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex w-full justify-center rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
-            >
-              {loading ? "Signing in..." : "Sign in"}
-            </button>
           </form>
 
-          <div className="mt-8">
+          <div className="mt-8 pt-6 border-t border-white/10">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
+                <div className="w-full border-t border-white/5" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-gray-500">
-                  New to the platform?
+                <span className="bg-zinc-900 px-4 text-zinc-500 rounded-full">
+                  Or continue with
                 </span>
               </div>
             </div>
 
             <div className="mt-6">
-              <a
-                href="#"
-                className="flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+              <button
+                type="button"
+                className="group relative w-full flex items-center justify-center py-3.5 px-4 rounded-xl border border-white/10 bg-zinc-950/50 text-sm font-semibold text-white shadow-inner hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all duration-200"
+                onClick={() => {
+                  alert("Google Sign-In integration pending");
+                }}
               >
-                Create an account
-              </a>
-            </div>
-          </div>
-
-          {/* Credentials Hint - For Demo Purposes */}
-          <div className="mt-8 rounded-lg bg-gray-50 p-4 text-xs text-gray-500 border border-gray-100">
-            <p className="font-semibold mb-2">Demo Credentials:</p>
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <span className="font-medium text-gray-700 block">Engineer</span>
-                engineer / engineer
-              </div>
-              <div>
-                <span className="font-medium text-gray-700 block">PM</span>
-                pro1 / pro1
-              </div>
-              <div>
-                <span className="font-medium text-gray-700 block">HR</span>
-                hr1 / hr1
-              </div>
+                <div className="bg-white p-1 rounded-full mr-3 group-hover:bg-gray-100 transition-colors">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24">
+                    <path
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                      fill="#4285F4"
+                    />
+                    <path
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                      fill="#34A853"
+                    />
+                    <path
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                      fill="#FBBC05"
+                    />
+                    <path
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                      fill="#EA4335"
+                    />
+                    <path d="M1 1h22v22H1z" fill="none" />
+                  </svg>
+                </div>
+                Sign in with Google
+              </button>
             </div>
           </div>
         </div>

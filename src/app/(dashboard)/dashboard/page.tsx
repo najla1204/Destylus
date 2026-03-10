@@ -3,6 +3,10 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
+    PieChart, Pie, Cell
+} from 'recharts';
+import {
     TrendingUp,
     AlertTriangle,
     Users,
@@ -210,188 +214,140 @@ function DashboardContent() {
 
     // Render HR View
     if (userRole === "HR Manager") {
+        // Prepare Chart Data
+        const sitesWithWorkers = sites.map(site => {
+            const workersCount = employees.filter(emp => emp.site === site.name).length;
+            return {
+                name: site.name,
+                workers: workersCount
+            };
+        });
+
+        const budgetData = sites.map(site => ({
+            name: site.name,
+            value: site.budget || 0
+        }));
+
+        const COLORS = ['#F59E0B', '#3B82F6', '#10B981', '#EF4444', '#8B5CF6'];
+
         return (
             <div className="space-y-8">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">HR Overview</h1>
-                        <p className="text-muted">Manage your Organization Masters</p>
+                        <h1 className="text-2xl font-bold text-foreground font-serif tracking-wide uppercase">HR Overview</h1>
+                        <p className="text-muted tracking-widest text-xs uppercase mt-1">Manage your Organization Metrics</p>
                     </div>
                 </div>
 
-                {/* Stats Grid */}
+                {/* Premium Stats Grid */}
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                    <div className="rounded-xl border border-gray-700 bg-panel p-6 shadow-sm">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-muted">Total Employees</span>
-                            <img width="20" height="20" src="https://img.icons8.com/fluency-systems-filled/48/1A1A1A/commercial-development-management.png" alt="commercial-development-management" />
+                    <div className="rounded-2xl bg-panel border-gray-700 border-b-4 border-b-[#FFC107] p-6 shadow-xl relative overflow-hidden group hover:border-gray-700 transition-colors">
+                        <div className="flex items-center justify-between z-10 relative">
+                            <span className="text-xs uppercase tracking-widest font-semibold text-gray-400">Total Employees</span>
+                            <div className="bg-[#FFC107]/10 p-2 rounded-lg">
+                                <Users size={20} className="text-[#FFC107]" />
+                            </div>
                         </div>
-                        <div className="mt-2 text-3xl font-bold text-foreground">{employees.length}</div>
-                        <span className="text-xs text-success">+Active Workforce</span>
+                        <div className="mt-4 text-4xl font-bold text-white z-10 relative">{employees.length}</div>
+                        <span className="text-xs text-gray-500 z-10 relative block mt-2">ACTIVE WORKFORCE</span>
                     </div>
-                    <div className="rounded-xl border border-gray-700 bg-panel p-6 shadow-sm">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-muted">Active Sites</span>
-                            <img width="20" height="20" src="https://img.icons8.com/ios/50/1A1A1A/road-worker.png" alt="road-worker" />
+                    
+                    <div className="rounded-2xl bg-panel border-gray-700 border-b-4 border-b-[#FFC107] p-6 shadow-xl relative overflow-hidden group hover:border-gray-700 transition-colors">
+                        <div className="flex items-center justify-between z-10 relative">
+                            <span className="text-xs uppercase tracking-widest font-semibold text-gray-400">Active Sites</span>
+                            <div className="bg-[#FFC107]/10 p-2 rounded-lg">
+                                <Building size={20} className="text-[#FFC107]" />
+                            </div>
                         </div>
-                        <div className="mt-2 text-3xl font-bold text-foreground">{sites.length}</div>
-                        <span className="text-xs text-muted">Ongoing Projects</span>
+                        <div className="mt-4 text-4xl font-bold text-white z-10 relative">{sites.length}</div>
+                        <span className="text-xs text-gray-500 z-10 relative block mt-2">ONGOING PROJECTS</span>
                     </div>
-                    <div className="rounded-xl border border-gray-700 bg-panel p-6 shadow-sm">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-muted">Pending Claims</span>
-                            <img width="20" height="20" src="https://img.icons8.com/ios-filled/50/1A1A1A/data-pending.png" alt="data-pending" />
+
+                    <div className="rounded-2xl bg-panel border-gray-700 border-b-4 border-b-[#FFC107] p-6 shadow-xl relative overflow-hidden group hover:border-gray-700 transition-colors">
+                        <div className="flex items-center justify-between z-10 relative">
+                            <span className="text-xs uppercase tracking-widest font-semibold text-gray-400">Pending Claims</span>
+                            <div className="bg-[#FFC107]/10 p-2 rounded-lg">
+                                <FileText size={20} className="text-[#FFC107]" />
+                            </div>
                         </div>
-                        <div className="mt-2 text-3xl font-bold text-foreground">8</div>
-                        <span className="text-xs text-warning">Requires Approval</span>
+                        <div className="mt-4 text-4xl font-bold text-white z-10 relative">8</div>
+                        <span className="text-xs text-gray-500 z-10 relative block mt-2">REQUIRES APPROVAL</span>
                     </div>
-                    <div className="rounded-xl border border-gray-700 bg-panel p-6 shadow-sm">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-muted">Payroll Status</span>
-                            <img width="20" height="20" src="https://img.icons8.com/fluency-systems-filled/48/1A1A1A/money.png" alt="money" />
+
+                    <div className="rounded-2xl bg-panel border-gray-700 border-b-4 border-b-[#FFC107] p-6 shadow-xl relative overflow-hidden group hover:border-gray-700 transition-colors">
+                        <div className="flex items-center justify-between z-10 relative">
+                            <span className="text-xs uppercase tracking-widest font-semibold text-gray-400">Payroll Status</span>
+                            <div className="bg-[#FFC107]/10 p-2 rounded-lg">
+                                <DollarSign size={20} className="text-[#FFC107]" />
+                            </div>
                         </div>
-                        <div className="mt-2 text-3xl font-bold text-foreground">Pending</div>
-                        <span className="text-xs text-muted">For Jan 2026</span>
+                        <div className="mt-4 text-2xl font-bold text-white z-10 relative pt-2">PENDING</div>
+                        <span className="text-xs text-gray-500 z-10 relative block mt-2">FOR CURRENT MONTH</span>
                     </div>
                 </div>
 
-                {/* MANAGE MASTERS SECTION */}
-                <div className="space-y-6">
-                    <h2 className="text-xl font-bold text-foreground text-center border-b border-gray-700 pb-4">Manage Masters</h2>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-                        {/* 1. SITE MASTER */}
-                        <div className="rounded-xl border border-gray-700 bg-panel flex flex-col h-[500px]">
-                            <div className="p-6 border-b border-gray-700 flex justify-between items-center bg-surface/50 rounded-t-xl">
-                                <div className="flex items-center gap-2">
-                                    <img width="20" height="20" src="https://img.icons8.com/ios/50/1A1A1A/building.png" alt="building" />
-                                    <h3 className="font-bold text-foreground">Site Master</h3>
-                                </div>
-                                <button
-                                    onClick={() => setShowAddSiteModal(true)}
-                                    className="flex items-center gap-2 text-xs font-bold bg-primary text-black px-3 py-1.5 rounded-lg hover:bg-primary/90"
-                                >
-                                    <Plus size={14} /> Add Site
-                                </button>
-                            </div>
-                            <div className="p-6 overflow-y-auto space-y-3 flex-1">
-                                {filteredSites.map(site => (
-                                    <div key={site.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-700 bg-surface hover:border-gray-500 transition-colors group">
-                                        <Link href={`/sites/${site.id}`} className="flex-1 flex flex-col cursor-pointer">
-                                            <span className="font-semibold text-foreground text-sm hover:text-primary transition-colors">{site.name}</span>
-                                            <span className="text-xs text-muted flex items-center gap-1"><MapPin size={10} /> {site.location}</span>
-                                        </Link>
-                                        <div className="flex items-center gap-3">
-                                            <span className={`text-[10px] px-2 py-0.5 rounded-lg border ${site.status === 'Active' ? 'text-success border-success/30 bg-success/10' : 'text-muted border-gray-600'
-                                                }`}>{site.status}</span>
-                                            <button
-                                                onClick={() => handleDeleteSite(site.id)}
-                                                className="text-muted hover:text-red-500 transition-colors p-1"
-                                                title="Delete Site"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                {/* Dashboard Charts */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+                    {/* Graph 1: Workers per Site */}
+                    <div className="rounded-2xl bg-panel border-gray-700 p-6 shadow-xl">
+                        <div className="mb-6 flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-white uppercase tracking-wider">Workers Assignment per Site</h3>
+                            <Users size={18} className="text-[#FFC107]" />
                         </div>
-
-                        {/* 2. EMPLOYEE MASTER */}
-                        <div className="rounded-xl border border-gray-700 bg-panel flex flex-col h-[500px]">
-                            <div className="p-6 border-b border-gray-700 flex justify-between items-center bg-surface/50 rounded-t-xl">
-                                <div className="flex items-center gap-2">
-                                    <img width="20" height="20" src="https://img.icons8.com/pulsar-line/48/1A1A1A/conference.png" alt="conference" />
-                                    <h3 className="font-bold text-foreground">Employee Master</h3>
-                                </div>
-                                <button
-                                    onClick={() => setShowAddEmployeeModal(true)}
-                                    className="flex items-center gap-2 text-xs font-bold bg-blue-500 text-white px-3 py-1.5 rounded-lg hover:bg-blue-600"
-                                >
-                                    <Plus size={14} /> Add Employee
-                                </button>
-                            </div>
-                            <div className="p-6 overflow-y-auto space-y-3 flex-1">
-                                {filteredEmployees.map(emp => (
-                                    <div key={emp.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-700 bg-surface hover:border-gray-500 transition-colors">
-                                        <Link href={`/engineers/${emp.id}`} className="flex-1 flex items-center gap-3 cursor-pointer">
-                                            <div className="h-8 w-8 rounded-full bg-orange-100 text-black flex items-center justify-center font-bold text-xs border border-orange-200">
-                                                {emp.name.charAt(0)}
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className="font-semibold text-foreground text-sm hover:text-blue-400 transition-colors">{emp.name}</span>
-                                                <span className="text-xs text-muted">{emp.role}</span>
-                                            </div>
-                                        </Link>
-                                        <button
-                                            onClick={() => handleDeleteEmployee(emp.id)}
-                                            className="text-muted hover:text-red-500 transition-colors p-1"
-                                            title="Delete Employee"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
+                        <div className="h-[300px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={sitesWithWorkers} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                                    <XAxis dataKey="name" stroke="#888" tick={{ fill: '#888', fontSize: 12 }} />
+                                    <YAxis stroke="#888" tick={{ fill: '#888', fontSize: 12 }} />
+                                    <RechartsTooltip 
+                                        contentStyle={{ backgroundColor: '#1A1A1A', border: '1px solid #333', borderRadius: '8px' }}
+                                        itemStyle={{ color: '#FFC107' }}
+                                    />
+                                    <Bar dataKey="workers" name="Total Workers" fill="#FFC107" radius={[4, 4, 0, 0]} barSize={40} />
+                                </BarChart>
+                            </ResponsiveContainer>
                         </div>
+                    </div>
 
+                    {/* Graph 2: Budget Distribution */}
+                    <div className="rounded-2xl bg-panel border-gray-700 p-6 shadow-xl">
+                        <div className="mb-6 flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-white uppercase tracking-wider">Budget Allocation</h3>
+                            <DollarSign size={18} className="text-[#FFC107]" />
+                        </div>
+                        <div className="h-[300px] flex items-center justify-center">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={budgetData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={70}
+                                        outerRadius={100}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                    >
+                                        {budgetData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <RechartsTooltip 
+                                        formatter={(value: any) => [`₹${(Number(value)/100000).toFixed(1)}L`, 'Budget']}
+                                        contentStyle={{ backgroundColor: '#1A1A1A', border: '1px solid #333', borderRadius: '8px' }}
+                                    />
+                                    <Legend 
+                                        verticalAlign="bottom" 
+                                        height={36} 
+                                        iconType="circle"
+                                        wrapperStyle={{ fontSize: '12px', color: '#888' }}
+                                    />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
                 </div>
-
-                {/* MODALS */}
-                {/* 1. Add Site Modal */}
-                {showAddSiteModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                        <div className="w-full max-w-md rounded-xl bg-panel p-6 shadow-xl border border-gray-700">
-                            <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-xl font-bold text-foreground">Add New Site</h2>
-                                <button onClick={() => setShowAddSiteModal(false)}><X size={20} className="text-muted hover:text-foreground" /></button>
-                            </div>
-                            <form onSubmit={handleAddSite} className="space-y-4">
-                                <div>
-                                    <label className="mb-1 block text-sm font-medium text-muted">Site Name</label>
-                                    <input type="text" required className="w-full rounded-lg border border-gray-700 bg-surface px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none" value={newSite.name} onChange={e => setNewSite({ ...newSite, name: e.target.value })} />
-                                </div>
-                                <div>
-                                    <label className="mb-1 block text-sm font-medium text-muted">Location</label>
-                                    <input type="text" required className="w-full rounded-lg border border-gray-700 bg-surface px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none" value={newSite.location} onChange={e => setNewSite({ ...newSite, location: e.target.value })} />
-                                </div>
-                                <button type="submit" className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90 transition-colors">Create Site</button>
-                            </form>
-                        </div>
-                    </div>
-                )}
-
-                {/* 2. Add Employee Modal */}
-                {showAddEmployeeModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                        <div className="w-full max-w-md rounded-xl bg-panel p-6 shadow-xl border border-gray-700">
-                            <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-xl font-bold text-foreground">Add New Employee</h2>
-                                <button onClick={() => setShowAddEmployeeModal(false)}><X size={20} className="text-muted hover:text-foreground" /></button>
-                            </div>
-                            <form onSubmit={handleAddEmployee} className="space-y-4">
-                                <div>
-                                    <label className="mb-1 block text-sm font-medium text-muted">Employee Name</label>
-                                    <input type="text" required className="w-full rounded-lg border border-gray-700 bg-surface px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none" value={newEmployee.name} onChange={e => setNewEmployee({ ...newEmployee, name: e.target.value })} />
-                                </div>
-                                <div>
-                                    <label className="mb-1 block text-sm font-medium text-muted">Role</label>
-                                    <select className="w-full rounded-lg border border-gray-700 bg-surface px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none" value={newEmployee.role} onChange={e => setNewEmployee({ ...newEmployee, role: e.target.value })}>
-                                        <option>Site Engineer</option>
-                                        <option>Civil Engineer</option>
-                                        <option>Safety Officer</option>
-                                        <option>Supervisor</option>
-                                        <option>Laborer</option>
-                                    </select>
-                                </div>
-                                <button type="submit" className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 transition-colors">Add Employee</button>
-                            </form>
-                        </div>
-                    </div>
-                )}
             </div>
         );
     }

@@ -75,10 +75,6 @@ export default function LeavePage() {
 
         return (
             <div className="space-y-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-foreground">Leave Requests</h1>
-                    <p className="text-muted">Manage and verify leave applications.</p>
-                </div>
 
                 {/* Tabs */}
                 <div className="flex border-b border-gray-700">

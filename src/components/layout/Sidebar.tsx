@@ -13,6 +13,7 @@ const menuItems = [
   { name: "Engineers", href: "/engineers", icon: "https://img.icons8.com/ios-filled/50/1A1A1A/engineer.png" },
   { name: "Attendance", href: "/attendance", icon: "https://img.icons8.com/fluency-systems-filled/48/1A1A1A/attendance-mark.png" },
   { name: "Leave", href: "/leave", icon: "https://img.icons8.com/hatch/64/1A1A1A/calendar.png" },
+  { name: "Issues", href: "/issues", icon: FileText },
   { name: "Settings", href: "/settings/profile", icon: "https://img.icons8.com/ios-glyphs/30/1A1A1A/settings--v1.png" },
 ];
 
@@ -37,7 +38,7 @@ export default function Sidebar() {
       return menuItems.filter(item => ["Dashboard", "Engineers", "Settings"].includes(item.name));
     }
     if (userInfo.role === "HR Manager") {
-      return menuItems.filter(item => ["Dashboard", "Sites", "Project Managers", "Engineers", "Attendance", "Leave", "Settings"].includes(item.name));
+      return menuItems.filter(item => ["Dashboard", "Sites", "Project Managers", "Engineers", "Leave", "Issues", "Settings"].includes(item.name));
     }
     // Default (Engineer / Admin) sees everything for now
     return menuItems;
@@ -46,13 +47,13 @@ export default function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 z-50 flex h-screen w-[260px] flex-col border-r border-gray-700 bg-panel transition-transform duration-300">
       <div className="flex h-16 shrink-0 items-center justify-start gap-3 border-b border-gray-700 px-6">
-        <img width="32" height="32" src="https://img.icons8.com/hatch/64/FAB005/skyscrapers.png" alt="skyscrapers" />
-        <span className="text-xl font-bold tracking-tight text-foreground">CivilERP</span>
+        <img className="h-8 object-contain" src="/logo.png" alt="Destylus Logo" />
+        <span className="text-xl font-bold tracking-[0.2em] text-white">DESTYLUS</span>
       </div>
 
       <nav className="flex flex-1 flex-col gap-2 p-4">
         {getFilteredMenuItems().map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <Link
               key={item.href}

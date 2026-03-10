@@ -113,20 +113,37 @@ export default function Navbar() {
         };
     }, [showDropdown]);
 
+    const getPageTitle = (path: string) => {
+        if (path.startsWith("/dashboard")) return "Dashboard";
+        if (path.startsWith("/sites")) return "Sites";
+        if (path.startsWith("/projects")) return "Projects";
+        if (path.startsWith("/project-managers")) return "Project Managers";
+        if (path.startsWith("/engineers")) return "Engineers";
+        if (path.startsWith("/attendance")) return "Attendance";
+        if (path.startsWith("/leave")) return "Leave";
+        if (path.startsWith("/issues")) return "Issues";
+        if (path.startsWith("/settings")) return "Settings";
+        return "Dashboard";
+    };
+
     return (
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between bg-background px-8 border-b border-gray-700/50">
-            <div className="relative w-[300px]">
-                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-                <input
-                    type="text"
-                    placeholder="Search projects, materials..."
-                    className="w-full rounded-md border border-gray-700 bg-surface py-2.5 pl-10 pr-4 text-sm text-foreground transition-colors focus:border-primary focus:outline-none"
-                    onChange={(e) => handleSearch(e.target.value)}
-                    value={searchParams.get("q") || ""}
-                />
+            <div className="flex items-center">
+                <h1 className="text-xl font-bold text-foreground">{getPageTitle(pathname)}</h1>
             </div>
 
             <div className="flex items-center gap-4">
+                <div className="relative w-[250px] md:w-[300px]">
+                    <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+                    <input
+                        type="text"
+                        placeholder="Search projects, materials..."
+                        className="w-full rounded-md border border-gray-700 bg-surface py-2 pl-10 pr-4 text-sm text-foreground transition-colors focus:border-primary focus:outline-none"
+                        onChange={(e) => handleSearch(e.target.value)}
+                        value={searchParams.get("q") || ""}
+                    />
+                </div>
+
                 <div className="relative" ref={dropdownRef}>
                     <button
                         onClick={() => setShowDropdown(!showDropdown)}

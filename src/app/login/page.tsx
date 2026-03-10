@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, AlertCircle, Eye, EyeOff, Building2 } from 'lucide-react';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -82,30 +82,41 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div 
+      className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
+      style={{
+        backgroundImage: `url('https://images.unsplash.com/photo-1541888087405-eb81f84d6b67?q=80&w=2671&auto=format&fit=crop')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      {/* Dark Overlay for depth and contrast */}
+      <div className="absolute inset-0 bg-zinc-950/85 backdrop-blur-sm z-0"></div>
+
+      <div className="max-w-md w-full space-y-8 relative z-10 bg-zinc-900/60 p-8 sm:p-10 rounded-[2rem] shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] border border-white/10 backdrop-blur-md">
         <div>
-          <div className="mx-auto h-12 w-12 bg-indigo-600 rounded-full flex items-center justify-center">
-            <User className="h-6 w-6 text-white" />
+          {/* Logo / Brand Accent */}
+          <div className="mx-auto h-16 w-16 bg-[#ffb600] rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(255,182,0,0.25)]">
+            <Building2 className="h-8 w-8 text-black" strokeWidth={2.5} />
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
+          <h2 className="mt-8 text-center text-3xl font-extrabold text-white tracking-tight">
+            Centralized Access
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Access the attendance management system
+          <p className="mt-2 text-center text-sm text-zinc-400">
+            Sign in to manage construction progress
           </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="bg-white shadow-lg rounded-lg p-6 space-y-6">
+          <div className="space-y-5">
             {/* Email Field */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-zinc-300 mb-2">
                 Email Address
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-gray-400" />
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none transition-colors group-focus-within:text-[#ffb600]">
+                  <User className="h-5 w-5 text-zinc-500 group-focus-within:text-[#ffb600] transition-colors" />
                 </div>
                 <input
                   id="email"
@@ -115,7 +126,7 @@ export default function LoginPage() {
                   required
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="appearance-none relative block w-full pl-10 pr-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  className="appearance-none relative block w-full pl-11 pr-3 py-3 border border-white/10 placeholder-zinc-600 text-white bg-zinc-950/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ffb600]/80 focus:border-transparent transition-all sm:text-sm shadow-inner"
                   placeholder="Enter your email"
                 />
               </div>
@@ -123,12 +134,12 @@ export default function LoginPage() {
 
             {/* Password Field */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-zinc-300 mb-2">
                 Password
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-zinc-500 group-focus-within:text-[#ffb600] transition-colors" />
                 </div>
                 <input
                   id="password"
@@ -138,18 +149,18 @@ export default function LoginPage() {
                   required
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="appearance-none relative block w-full pl-10 pr-10 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  className="appearance-none relative block w-full pl-11 pr-10 py-3 border border-white/10 placeholder-zinc-600 text-white bg-zinc-950/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ffb600]/80 focus:border-transparent transition-all sm:text-sm shadow-inner"
                   placeholder="Enter your password"
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center transition-opacity hover:opacity-80"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
+                    <EyeOff className="h-5 w-5 text-zinc-400 hover:text-white transition-colors" />
                   ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
+                    <Eye className="h-5 w-5 text-zinc-400 hover:text-white transition-colors" />
                   )}
                 </button>
               </div>
@@ -157,15 +168,18 @@ export default function LoginPage() {
 
             {/* Message Display */}
             {message && (
-              <div className={`p-3 rounded-md ${messageType === 'success'
-                  ? 'bg-green-50 border border-green-200'
-                  : 'bg-red-50 border border-red-200'
+              <div className={`p-4 rounded-xl backdrop-blur-md ${
+                  messageType === 'success'
+                  ? 'bg-green-500/10 border border-green-500/20'
+                  : 'bg-red-500/10 border border-red-500/20'
                 }`}>
                 <div className="flex items-center">
-                  <AlertCircle className={`h-4 w-4 mr-2 ${messageType === 'success' ? 'text-green-600' : 'text-red-600'
-                    }`} />
-                  <span className={`text-sm ${messageType === 'success' ? 'text-green-800' : 'text-red-800'
-                    }`}>
+                  <AlertCircle className={`h-4 w-4 mr-2 ${
+                    messageType === 'success' ? 'text-green-400' : 'text-red-400'
+                  }`} />
+                  <span className={`text-sm tracking-wide ${
+                    messageType === 'success' ? 'text-green-200' : 'text-red-200'
+                  }`}>
                     {message}
                   </span>
                 </div>
@@ -173,33 +187,29 @@ export default function LoginPage() {
             )}
 
             {/* Submit Button */}
-            <div>
+            <div className="pt-2">
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-xl text-black bg-[#ffb600] hover:bg-[#ffc833] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900 focus:ring-[#ffb600] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed uppercase tracking-wider shadow-[0_0_20px_rgba(255,182,0,0.15)] hover:shadow-[0_0_25px_rgba(255,182,0,0.3)]"
               >
                 {loading ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-black mr-2"></div>
                     Signing in...
                   </>
                 ) : (
-                  'Sign in'
+                  'Sign in securely'
                 )}
               </button>
             </div>
           </div>
         </form>
 
-        {/* Demo Credentials */}
-        <div className="bg-white bg-opacity-50 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Demo Credentials:</h3>
-          <div className="space-y-1 text-xs text-gray-600">
-            <p><strong>Engineer:</strong> engineer@example.com / password123</p>
-            <p><strong>Project Manager:</strong> pm@example.com / password123</p>
-            <p><strong>HR:</strong> hr@example.com / password123</p>
-          </div>
+        <div className="mt-6 border-t border-white/5 pt-6 text-center">
+          <p className="text-xs text-zinc-500 uppercase tracking-widest font-medium">
+            Project Destylus
+          </p>
         </div>
       </div>
     </div>
