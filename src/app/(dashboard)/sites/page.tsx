@@ -34,14 +34,7 @@ interface ProjectManager {
 
 
 
-const STATIC_ENGINEERS = [
-    "John Doe",
-    "Alex Smith",
-    "Sarah Connor",
-    "Mike Ross",
-    "Emily Chen",
-    "David Wilson"
-];
+
 
 // MultiSelect Dropdown Component
 function MultiSelect({
@@ -155,6 +148,7 @@ export default function SitesPage() {
     const router = useRouter();
     const [sites, setSites] = useState<Site[]>([]);
     const [availablePMs, setAvailablePMs] = useState<string[]>([]);
+    const [availableEngineers, setAvailableEngineers] = useState<string[]>([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     
     // View mode and filtering state
@@ -165,6 +159,17 @@ export default function SitesPage() {
     
     const [editingSiteId, setEditingSiteId] = useState<string | null>(null);
     const [editForm, setEditForm] = useState<Partial<Site>>({});
+    const [userRole, setUserRole] = useState("");
+    const [userName, setUserName] = useState("");
+
+    useEffect(() => {
+        setUserRole(localStorage.getItem("userRole") || "");
+        setUserName(localStorage.getItem("userName") || "");
+    }, []);
+
+    const isEngineer = userRole === "Engineer" || userRole === "Site Engineer" || userRole === "engineer" || userRole === "site_engineer";
+    const isPM = userRole === "Project Manager" || userRole === "project_manager" || userRole === "project manager";
+    const canEditSites = !isEngineer && !isPM;
 
     useEffect(() => {
         // Fetch sites from MongoDB API with localStorage fallback
@@ -237,19 +242,30 @@ export default function SitesPage() {
         };
         fetchSites();
 
-        // Load dynamic Project Managers from localStorage (still used for PMs list)
-        const savedPMs = localStorage.getItem("destylus_dashboard_pms_v2");
-        if (savedPMs) {
+        const fetchUsers = async () => {
             try {
-                const parsed: ProjectManager[] = JSON.parse(savedPMs);
-                const pmNames = parsed.map(pm => pm.name);
-                setAvailablePMs(pmNames);
-            } catch (e) {
-                console.error("Failed to parse PMs", e);
+                const [pmRes, engRes] = await Promise.all([
+                    fetch('/api/users?role=project_manager'),
+                    fetch('/api/users?role=engineer')
+                ]);
+                
+                if (pmRes.ok) {
+                    const pmData = await pmRes.json();
+                    if (pmData.users) {
+                        setAvailablePMs(pmData.users.map((u: any) => u.name));
+                    }
+                }
+                if (engRes.ok) {
+                    const engData = await engRes.json();
+                    if (engData.users) {
+                        setAvailableEngineers(engData.users.map((u: any) => u.name));
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch users", err);
             }
-        } else {
-            setAvailablePMs(["John Doe", "Sarah Smith", "Mike Johnson"]);
-        }
+        };
+        fetchUsers();
     }, []);
 
     const [newSite, setNewSite] = useState<Partial<Site>>({
@@ -336,119 +352,129 @@ export default function SitesPage() {
 
     // Filter Logic
     const filteredSites = sites.filter(site => {
+        // Restrict visibility for Site Engineers
+        if (isEngineer && userName && !site.engineers.includes(userName)) {
+            return false;
+        }
+
+        // Restrict visibility for Project Managers
+        if (isPM && userName && !site.managers.includes(userName)) {
+            return false;
+        }
+
         const matchesSearch = site.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                               site.locationName.toLowerCase().includes(searchQuery.toLowerCase());
                               
         const matchesPM = selectedPMs.length === 0 || 
                           site.managers.some(pm => selectedPMs.includes(pm));
                           
-        const matchesEng = selectedEngineers.length === 0 || 
-                           site.engineers.some(eng => selectedEngineers.includes(eng));
+        const matchesEng = isEngineer ? true : (selectedEngineers.length === 0 || 
+                           site.engineers.some(eng => selectedEngineers.includes(eng)));
                            
         return matchesSearch && matchesPM && matchesEng;
     });
 
-    return (
-        <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-700 pb-4">
-                <div className="flex flex-1 items-center gap-4 flex-wrap">
-                    <div className="relative flex-1 min-w-[200px] max-w-sm">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={16} />
-                        <input
-                            type="text"
-                            placeholder="Search sites or locations..."
-                            className="w-full rounded-lg border border-gray-700 bg-surface pl-10 pr-4 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                    </div>
-                    <div className="w-48">
-                        <MultiSelect 
-                            options={availablePMs} 
-                            selected={selectedPMs} 
-                            onChange={setSelectedPMs}
-                            placeholder="Filter by PM..." 
-                        />
-                    </div>
-                    <div className="w-48">
-                        <MultiSelect 
-                            options={STATIC_ENGINEERS} 
-                            selected={selectedEngineers} 
-                            onChange={setSelectedEngineers}
-                            placeholder="Filter by Engineer..." 
-                        />
-                    </div>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center rounded-lg border border-gray-700 bg-surface p-1">
-                        <button
-                            onClick={() => setViewMode("grid")}
-                            className={`rounded-md p-1.5 transition-colors ${viewMode === "grid" ? "bg-primary text-primary-foreground" : "text-muted hover:text-foreground"}`}
-                            title="Grid View"
-                        >
-                            <LayoutGrid size={16} />
-                        </button>
-                        <button
-                            onClick={() => setViewMode("list")}
-                            className={`rounded-md p-1.5 transition-colors ${viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted hover:text-foreground"}`}
-                            title="List/Table View"
-                        >
-                            <List size={16} />
-                        </button>
-                    </div>
+    // Derive available PMs dynamically for Site Engineers
+    const displayAvailablePMs = isEngineer ? 
+        Array.from(new Set(sites.filter(s => userName && s.engineers.includes(userName)).flatMap(s => s.managers))) : 
+        availablePMs;
 
-                    <button
-                        onClick={() => setIsAddModalOpen(true)}
-                        className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-black shadow-sm transition-all hover:bg-primary-hover hover:scale-[1.02] active:scale-[0.98]"
-                    >
-                        <Plus size={18} />
-                        Add New Site
-                    </button>
+    return (
+        <div className="space-y-8 pb-10">
+            {/* Header Section */}
+            <div className="flex flex-col gap-6">
+
+                {/* Stat Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50 cursor-pointer">
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Total Sites</span>
+                        <div className="text-4xl font-bold text-white leading-none">{sites.length}</div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-primary">All Records</span>
+                    </div>
+                    
+                    <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50 cursor-pointer">
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Active Sites</span>
+                        <div className="text-4xl font-bold text-white leading-none">{sites.filter(s => s.status === "Active").length}</div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-green-500">Currently Active</span>
+                    </div>
+                    
+                    <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50 cursor-pointer">
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Total Engineers</span>
+                        <div className="text-4xl font-bold text-white leading-none">{sites.reduce((acc, s) => acc + (s.engineers?.length || 0), 0)}</div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-400">Allocated</span>
+                    </div>
+                    
+                    <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50 cursor-pointer">
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Open Issues</span>
+                        <div className="text-4xl font-bold text-white leading-none">{sites.reduce((acc, s) => acc + (s.issueCount || 0), 0)}</div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-red-500">Require Attn</span>
+                    </div>
                 </div>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="rounded-xl border border-gray-700 bg-panel p-5 shadow-sm">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted">Total Sites</span>
-                        <div className="rounded-lg bg-primary/10 p-2">
-                            <MapPin size={18} className="text-primary" />
+            {/* Filter Bar */}
+            <div className="bg-panel rounded-2xl border border-gray-700 p-4">
+                <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+                    <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
+                        <div className="relative flex-1 min-w-[200px] lg:w-64">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                            <input
+                                type="text"
+                                placeholder="SEARCH SITES..."
+                                className="w-full bg-surface border border-gray-700 rounded-xl pl-10 pr-4 py-2 text-[10px] font-bold text-foreground placeholder:text-muted focus:outline-none focus:border-primary transition-all tracking-widest uppercase"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
                         </div>
+                        {!isPM && (
+                            <div className="w-48 text-[10px] uppercase tracking-widest text-foreground font-bold font-mono">
+                                <MultiSelect 
+                                    options={displayAvailablePMs} 
+                                    selected={selectedPMs} 
+                                    onChange={setSelectedPMs}
+                                    placeholder="FILTER BY PM..." 
+                                />
+                            </div>
+                        )}
+                        {!isEngineer && (
+                            <div className="w-48 text-[10px] uppercase tracking-widest text-foreground font-bold font-mono">
+                                <MultiSelect 
+                                    options={availableEngineers} 
+                                    selected={selectedEngineers} 
+                                    onChange={setSelectedEngineers}
+                                    placeholder="FILTER BY ENGINEER..." 
+                                />
+                            </div>
+                        )}
                     </div>
-                    <div className="mt-2 text-3xl font-bold text-foreground">{sites.length}</div>
-                    <span className="text-xs text-muted">All registered sites</span>
-                </div>
-                <div className="rounded-xl border border-gray-700 bg-panel p-5 shadow-sm">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted">Active Sites</span>
-                        <div className="rounded-lg bg-green-500/10 p-2">
-                            <Check size={18} className="text-green-400" />
+                    
+                    <div className="flex items-center gap-3 w-full lg:w-auto justify-end">
+                        <div className="flex items-center rounded-xl border border-gray-700 bg-surface p-1">
+                            <button
+                                onClick={() => setViewMode("grid")}
+                                className={`rounded-lg p-1.5 transition-colors ${viewMode === "grid" ? "bg-primary text-black" : "text-muted hover:text-foreground"}`}
+                                title="Grid View"
+                            >
+                                <LayoutGrid size={16} />
+                            </button>
+                            <button
+                                onClick={() => setViewMode("list")}
+                                className={`rounded-lg p-1.5 transition-colors ${viewMode === "list" ? "bg-primary text-black" : "text-muted hover:text-foreground"}`}
+                                title="List View"
+                            >
+                                <List size={16} />
+                            </button>
                         </div>
+                        
+                        {canEditSites && (
+                            <button
+                                onClick={() => setIsAddModalOpen(true)}
+                                className="whitespace-nowrap bg-foreground text-background font-bold px-6 py-2 rounded-xl hover:opacity-90 transition-all flex items-center justify-center gap-2 uppercase text-[10px] tracking-widest"
+                            >
+                                <Plus size={14} /> Add Site
+                            </button>
+                        )}
                     </div>
-                    <div className="mt-2 text-3xl font-bold text-foreground">{sites.filter(s => s.status === "Active").length}</div>
-                    <span className="text-xs text-green-400">Currently active</span>
-                </div>
-                <div className="rounded-xl border border-gray-700 bg-panel p-5 shadow-sm">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted">Total Engineers</span>
-                        <div className="rounded-lg bg-blue-500/10 p-2">
-                            <Plus size={18} className="text-blue-400" />
-                        </div>
-                    </div>
-                    <div className="mt-2 text-3xl font-bold text-foreground">{sites.reduce((acc, s) => acc + (s.engineers?.length || 0), 0)}</div>
-                    <span className="text-xs text-muted">Allocated across sites</span>
-                </div>
-                <div className="rounded-xl border border-gray-700 bg-panel p-5 shadow-sm">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted">Open Issues</span>
-                        <div className="rounded-lg bg-red-500/10 p-2">
-                            <Trash2 size={18} className="text-red-400" />
-                        </div>
-                    </div>
-                    <div className="mt-2 text-3xl font-bold text-foreground">{sites.reduce((acc, s) => acc + (s.issueCount || 0), 0)}</div>
-                    <span className="text-xs text-red-400">Requires attention</span>
                 </div>
             </div>
 
@@ -470,13 +496,15 @@ export default function SitesPage() {
                                     {site.name}
                                 </h3>
                             </div>
-                            <button
-                                onClick={(e) => handleDelete(site._id, e)}
-                                className="absolute top-4 right-4 rounded-lg p-2 text-muted hover:bg-red-500/10 hover:text-red-500 transition-colors z-10 opacity-0 group-hover:opacity-100"
-                                title="Delete Site"
-                            >
-                                <Trash2 size={18} />
-                            </button>
+                            {canEditSites && (
+                                <button
+                                    onClick={(e) => handleDelete(site._id, e)}
+                                    className="absolute top-4 right-4 rounded-lg p-2 text-muted hover:bg-red-500/10 hover:text-red-500 transition-colors z-10 opacity-0 group-hover:opacity-100"
+                                    title="Delete Site"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-2">
@@ -545,88 +573,96 @@ export default function SitesPage() {
                 )}
             </div>
             ) : (
-                <div className="overflow-x-auto rounded-xl border border-gray-700 bg-panel shadow-sm">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-surface text-muted">
-                            <tr>
-                                <th className="px-4 py-3 font-semibold uppercase tracking-wider">Site ID & Name</th>
-                                <th className="px-4 py-3 font-semibold uppercase tracking-wider">Location</th>
-                                <th className="px-4 py-3 font-semibold uppercase tracking-wider">Project Managers</th>
-                                <th className="px-4 py-3 font-semibold uppercase tracking-wider">Site Engineers</th>
-                                <th className="px-4 py-3 font-semibold uppercase tracking-wider text-center">Issues</th>
-                                <th className="px-4 py-3 font-semibold uppercase tracking-wider text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-700">
-                            {filteredSites.map((site) => (
-                                <tr 
-                                    key={site._id} 
-                                    onClick={() => router.push(`/sites/${site._id}`)}
-                                    className="hover:bg-surface/50 transition-colors cursor-pointer"
-                                >
-                                    <td className="px-4 py-4">
-                                        <div className="flex flex-col gap-1">
-                                            <span className="text-xs font-medium text-primary">SITE {site._id.slice(-3).toUpperCase()}</span>
-                                            <span className="font-bold text-foreground">{site.name}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-4">
-                                        <div className="flex flex-col gap-1">
-                                            <span className="text-muted flex items-center gap-1.5"><MapPin size={14} /> {site.locationName}</span>
-                                            {site.locationLink && (
-                                                <a href={site.locationLink} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="text-xs text-blue-400 hover:text-blue-300 ml-5 flex items-center gap-1">
-                                                    <LinkIcon size={10} /> Maps
-                                                </a>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-4">
-                                        <div className="flex flex-wrap gap-1">
-                                            {site.managers.length > 0 ? site.managers.map(pm => (
-                                                <span key={pm} className="px-2 py-0.5 rounded bg-gray-700 text-xs text-foreground">{pm}</span>
-                                            )) : <span className="text-gray-500 italic text-xs">None</span>}
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-4">
-                                        <div className="flex flex-wrap gap-1">
-                                            {site.engineers.length > 0 ? site.engineers.map(eng => (
-                                                <span key={eng} className="px-2 py-0.5 rounded bg-gray-700 text-xs text-foreground">{eng}</span>
-                                            )) : <span className="text-gray-500 italic text-xs">None</span>}
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-4 text-center">
-                                        <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold border shadow-sm ${
-                                            (site.issueCount || 0) > 0 ? "bg-red-500/10 text-red-500 border-red-500/20" : "bg-success/10 text-success border-success/20"
-                                        }`}>
-                                            {site.issueCount || 0} Active
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-4 text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <button
-                                                onClick={(e) => handleEditClick(site, e)}
-                                                className="rounded px-3 py-1 text-blue-400 hover:bg-blue-400/10 transition-colors inline-flex text-sm font-medium"
-                                                title="Edit Site"
-                                            >
-                                                Edit
-                                            </button>
-                                            <button
-                                                onClick={(e) => handleDelete(site._id, e)}
-                                                className="rounded p-1.5 text-muted hover:bg-red-500/10 hover:text-red-500 transition-colors inline-flex"
-                                                title="Delete Site"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    </td>
+                <div className="bg-panel rounded-2xl border border-gray-700 overflow-hidden shadow-sm">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="bg-surface border-b border-gray-700">
+                                <tr>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Site ID & Name</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Location</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Project Managers</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Site Engineers</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-center">Issues</th>
+                                    {canEditSites && (
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-right">Actions</th>
+                                    )}
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-gray-700/50">
+                                {filteredSites.map((site) => (
+                                    <tr 
+                                        key={site._id} 
+                                        onClick={() => router.push(`/sites/${site._id}`)}
+                                        className="hover:bg-surface/50 transition-colors cursor-pointer group"
+                                    >
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">SITE {site._id.slice(-3).toUpperCase()}</span>
+                                                <span className="text-[11px] font-bold text-foreground uppercase tracking-widest">{site.name}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-[10px] font-bold text-muted uppercase tracking-widest flex items-center gap-1.5"><MapPin size={12} /> {site.locationName}</span>
+                                                {site.locationLink && (
+                                                    <a href={site.locationLink} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="text-[10px] text-blue-400 font-bold uppercase tracking-widest hover:text-blue-300 ml-4 flex items-center gap-1">
+                                                        <LinkIcon size={10} /> MAPS
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-wrap gap-1">
+                                                {site.managers.length > 0 ? site.managers.map(pm => (
+                                                    <span key={pm} className="px-2 py-0.5 rounded border border-gray-600 bg-surface text-[10px] font-bold text-foreground uppercase tracking-widest">{pm}</span>
+                                                )) : <span className="text-gray-500 italic text-[10px] uppercase tracking-widest">NONE</span>}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-wrap gap-1">
+                                                {site.engineers.length > 0 ? site.engineers.map(eng => (
+                                                    <span key={eng} className="px-2 py-0.5 rounded border border-gray-600 bg-surface text-[10px] font-bold text-foreground uppercase tracking-widest">{eng}</span>
+                                                )) : <span className="text-gray-500 italic text-[10px] uppercase tracking-widest">NONE</span>}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[8px] font-bold uppercase tracking-widest border shadow-sm ${
+                                                (site.issueCount || 0) > 0 ? "bg-primary text-black border-transparent" : "bg-success text-black border-success/20"
+                                            }`}>
+                                                {site.issueCount || 0} ACTIVE
+                                            </span>
+                                        </td>
+                                        {canEditSites && (
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    <button
+                                                        onClick={(e) => handleEditClick(site, e)}
+                                                        className="h-8 w-8 bg-surface hover:bg-blue-400/10 rounded-lg text-muted hover:text-blue-400 transition-all border border-gray-700 hover:border-blue-400/30 flex items-center justify-center"
+                                                        title="Edit Site"
+                                                    >
+                                                        <span className="text-[10px] font-bold uppercase">EDIT</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => handleDelete(site._id, e)}
+                                                        className="h-8 w-8 bg-surface hover:bg-red-500/10 rounded-lg text-muted hover:text-red-500 transition-all border border-gray-700 hover:border-red-500/30 flex items-center justify-center"
+                                                        title="Delete Site"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        )}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                     {filteredSites.length === 0 && (
-                        <div className="py-12 text-center text-muted">
-                            <MapPin className="mx-auto mb-3 text-gray-500 opacity-50" size={32} />
-                            <p className="text-sm">No sites match your filters.</p>
+                        <div className="py-20 text-center bg-surface/50">
+                            <div className="w-16 h-16 rounded-full bg-surface border border-gray-700 flex items-center justify-center mx-auto mb-4">
+                                <MapPin className="text-muted w-8 h-8" />
+                            </div>
+                            <p className="text-[10px] font-bold text-muted uppercase tracking-widest">No sites match your filters.</p>
                         </div>
                     )}
                 </div>
@@ -736,7 +772,7 @@ export default function SitesPage() {
                                             Site Engineers
                                         </label>
                                         <MultiSelect
-                                            options={STATIC_ENGINEERS}
+                                            options={availableEngineers}
                                             selected={newSite.engineers || []}
                                             onChange={(selected) => setNewSite({ ...newSite, engineers: selected })}
                                             placeholder="Select engineers..."
@@ -852,7 +888,7 @@ export default function SitesPage() {
                                             Site Engineers
                                         </label>
                                         <MultiSelect
-                                            options={STATIC_ENGINEERS}
+                                            options={availableEngineers}
                                             selected={editForm.engineers || []}
                                             onChange={(selected) => setEditForm(prev => ({ ...prev, engineers: selected }))}
                                             placeholder="Select engineers..."

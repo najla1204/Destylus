@@ -99,63 +99,67 @@ export default function MaterialsPage() {
 
     return (
         <div className="flex flex-col gap-6 max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="flex flex-col gap-4 border-b border-gray-700 pb-6">
-                <Link
-                    href={`/sites/${params.id}`}
-                    className="flex items-center gap-2 text-sm text-muted hover:text-primary transition-colors w-fit"
-                >
-                    <ArrowLeft size={16} />
-                    Back to Site Details
-                </Link>
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold text-foreground">Material Management</h1>
-                        <p className="text-muted">Track inventory, purchases, and material usage.</p>
-                    </div>
-                    <div className="flex gap-3">
-                        <button
-                            onClick={() => openTransaction("OUT")}
-                            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-600 hover:bg-surface text-foreground font-medium transition-colors"
-                        >
-                            <ArrowDownLeft size={18} className="text-warning" />
-                            Record Usage
-                        </button>
-                        <button
-                            onClick={() => openTransaction("IN")}
-                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-black font-semibold transition-colors"
-                        >
-                            <ArrowUpRight size={18} />
-                            Add Stock (IN)
-                        </button>
-                    </div>
-                </div>
-            </div>
-
             {/* Stats Overview */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-panel border border-gray-700 p-6 rounded-xl flex items-center justify-between">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mt-2">
+                <div className="rounded-2xl border border-gray-700 bg-panel p-6 shadow-sm flex items-center justify-between">
                     <div>
-                        <p className="text-sm text-muted">Total Inventory Value</p>
-                        <p className="text-2xl font-bold text-foreground">₹{totalInventoryValue.toLocaleString()}</p>
+                        <span className="text-[11px] uppercase tracking-widest font-semibold text-muted mb-4 block">Total Inventory Value</span>
+                        <div className="text-4xl font-bold text-foreground mb-4">₹{totalInventoryValue.toLocaleString()}</div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Est. Value</span>
                     </div>
                     <Package className="text-primary opacity-20" size={40} />
                 </div>
-                <div className="bg-panel border border-gray-700 p-6 rounded-xl flex items-center justify-between">
+                <div className="rounded-2xl border border-gray-700 bg-panel p-6 shadow-sm flex items-center justify-between">
                     <div>
-                        <p className="text-sm text-muted">Total Items Tracked</p>
-                        <p className="text-2xl font-bold text-foreground">{totalItemsCount}</p>
+                        <span className="text-[11px] uppercase tracking-widest font-semibold text-muted mb-4 block">Total Items Tracked</span>
+                        <div className="text-4xl font-bold text-foreground mb-4">{totalItemsCount}</div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-blue-400">Inventory Items</span>
                     </div>
                     <div className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-500 font-bold">
                         {totalItemsCount}
                     </div>
                 </div>
-                <div className="bg-panel border border-gray-700 p-6 rounded-xl flex items-center justify-between">
+                <div className="rounded-2xl border border-gray-700 bg-panel p-6 shadow-sm flex items-center justify-between">
                     <div>
-                        <p className="text-sm text-muted">Overstocked Items</p>
-                        <p className="text-2xl font-bold text-warning">{overstockedItems}</p>
+                        <span className="text-[11px] uppercase tracking-widest font-semibold text-muted mb-4 block">Overstocked Items</span>
+                        <div className="text-4xl font-bold text-warning mb-4">{overstockedItems}</div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-warning">Needs attention</span>
                     </div>
                     <AlertTriangle className="text-warning opacity-80" size={32} />
+                </div>
+            </div>
+
+            {/* Filter Bar / Table Header */}
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center md:justify-between border-b border-gray-700 pb-4 mt-6">
+                <div className="flex flex-col gap-1">
+                    <Link
+                        href={`/sites/${params.id}`}
+                        className="flex items-center gap-2 text-sm text-primary hover:text-primary-hover mb-2 font-medium"
+                    >
+                        <ArrowLeft size={16} /> Back to Site Details
+                    </Link>
+                    <h2 className="text-lg font-bold text-foreground uppercase tracking-wider hidden xl:block">
+                        MATERIAL MANAGEMENT ({totalItemsCount})
+                    </h2>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    {/* Placeholder for Search if needed */}
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => openTransaction("OUT")}
+                            className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-gray-600 hover:bg-surface text-foreground text-sm font-semibold transition-colors flex-1 sm:flex-none"
+                        >
+                            <ArrowDownLeft size={16} className="text-warning" />
+                            Record Usage
+                        </button>
+                        <button
+                            onClick={() => openTransaction("IN")}
+                            className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-primary hover:bg-primary-hover text-black text-sm font-bold shadow-sm transition-colors flex-1 sm:flex-none whitespace-nowrap"
+                        >
+                            <ArrowUpRight size={16} />
+                            Add Stock (IN)
+                        </button>
+                    </div>
                 </div>
             </div>
 

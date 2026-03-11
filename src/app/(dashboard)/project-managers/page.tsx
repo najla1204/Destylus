@@ -56,8 +56,20 @@ export default function ProjectManagersPage() {
     const [siteSearchQuery, setSiteSearchQuery] = useState("");
     const [isSiteDropdownOpen, setIsSiteDropdownOpen] = useState(false);
     const [isEditSiteDropdownOpen, setIsEditSiteDropdownOpen] = useState(false);
+    const [userRole, setUserRole] = useState<string | null>(null);
 
     useEffect(() => {
+        const role = localStorage.getItem("userRole");
+        setUserRole(role);
+    }, []);
+
+    // Check if user is an engineer
+    const isEngineer = userRole === "Engineer" || userRole === "Site Engineer" || userRole === "engineer" || userRole === "site_engineer";
+
+    useEffect(() => {
+        if (isEngineer) {
+            // Optionally redirect, but for now we'll just return the blocked UI below
+        }
         const fetchPMs = async () => {
             setIsLoading(true);
             try {
@@ -225,41 +237,110 @@ export default function ProjectManagersPage() {
 
     const hasActiveFilters = filterSite || filterEngineer;
 
+    if (isLoading && userRole === null) {
+        return (
+            <div className="flex h-64 items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+            </div>
+        );
+    }
+
+    if (isEngineer) {
+        return (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="h-20 w-20 bg-red-500/10 rounded-full flex items-center justify-center text-red-500 mb-6 font-bold text-3xl">
+                    !
+                </div>
+                <h1 className="text-2xl font-bold text-foreground">Access Denied</h1>
+                <p className="text-muted mt-2 max-w-md">
+                    You do not have permission to view the Project Managers directory. Please contact your administrator if you believe this is an error.
+                </p>
+                <div className="mt-8">
+                    <Link href="/dashboard" className="px-6 py-2 bg-primary text-black font-bold rounded-lg hover:bg-primary/90 transition-colors">Return to Dashboard</Link>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
-            {/* Search Bar + Add Manager Button Row */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-700 pb-4">
-                <div className="relative flex-1 max-w-sm">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={16} />
-                    <input
-                        type="text"
-                        placeholder="Search managers..."
-                        className="w-full rounded-lg border border-gray-700 bg-surface pl-10 pr-4 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-2">
+                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Total Managers</span>
+                    <div className="text-4xl font-bold text-white leading-none">{pms.length}</div>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-primary">Registered project managers</span>
                 </div>
+                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Active Managers</span>
+                    <div className="text-4xl font-bold text-white leading-none">{pms.filter(pm => pm.status === "Active").length}</div>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-green-500">Currently active</span>
+                </div>
+                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Sites Assigned</span>
+                    <div className="text-4xl font-bold text-white leading-none">{new Set(pms.map(pm => pm.site).filter(Boolean)).size}</div>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-500">Unique sites with PMs</span>
+                </div>
+                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Engineers Managed</span>
+                    <div className="text-4xl font-bold text-white leading-none">{allEngineers.filter(eng => pms.some(pm => pm.site && pm.site === eng.site)).length}</div>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-purple-500">Under PM supervision</span>
+                </div>
+            </div>
 
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => setIsAddModalOpen(true)}
-                        className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-black shadow-sm hover:bg-primary/90 transition-colors"
-                    >
-                        <Plus size={18} />
-                        Add Manager
-                    </button>
+            {/* Search Bar + Filters + Actions Row */}
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between border-b border-gray-700 pb-4 mt-6">
+                <h2 className="text-lg font-bold text-foreground uppercase tracking-wider hidden xl:block">MANAGERS ({filteredPMs.length})</h2>
+                <div className="flex items-center gap-3 flex-wrap xl:flex-nowrap w-full xl:w-auto">
+                    <div className="relative flex-1 min-w-[150px] max-w-sm w-full sm:w-auto">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Search managers..."
+                            className="w-full rounded-lg border border-gray-700 bg-surface pl-10 pr-4 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+
+                    {/* Inline Filters */}
+                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
+                        <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted pr-1">
+                            <Filter size={14} />
+                        </div>
+                        <select
+                            value={filterSite}
+                            onChange={(e) => setFilterSite(e.target.value)}
+                            className="rounded-lg border border-gray-700 bg-surface px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none appearance-none cursor-pointer flex-1 sm:flex-none max-w-[130px] truncate"
+                        >
+                            <option value="">All Sites</option>
+                            {sites.map((site) => (
+                                <option key={site._id} value={site.name}>{site.name}</option>
+                            ))}
+                        </select>
+                        <select
+                            value={filterEngineer}
+                            onChange={(e) => setFilterEngineer(e.target.value)}
+                            className="rounded-lg border border-gray-700 bg-surface px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none appearance-none cursor-pointer flex-1 sm:flex-none max-w-[150px] truncate"
+                        >
+                            <option value="">All Engineers</option>
+                            {engineers.map((eng) => (
+                                <option key={eng} value={eng}>{eng}</option>
+                            ))}
+                        </select>
+                    </div>
 
                     <div className="flex items-center rounded-lg border border-gray-700 bg-surface p-1">
                         <button
                             onClick={() => setViewMode("grid")}
-                            className={`rounded-md p-1.5 transition-colors ${viewMode === "grid" ? "bg-primary text-primary-foreground" : "text-muted hover:text-foreground"}`}
+                            className={`rounded-md p-1.5 transition-colors ${viewMode === "grid" ? "bg-primary text-black font-semibold" : "text-muted hover:text-foreground"}`}
                             title="Grid View"
                         >
                             <LayoutGrid size={16} />
                         </button>
                         <button
                             onClick={() => setViewMode("list")}
-                            className={`rounded-md p-1.5 transition-colors ${viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted hover:text-foreground"}`}
+                            className={`rounded-md p-1.5 transition-colors ${viewMode === "list" ? "bg-primary text-black font-semibold" : "text-muted hover:text-foreground"}`}
                             title="List/Table View"
                         >
                             <List size={16} />
@@ -267,119 +348,12 @@ export default function ProjectManagersPage() {
                     </div>
 
                     <button
-                        onClick={() => setIsFilterOpen(!isFilterOpen)}
-                        className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                            hasActiveFilters
-                                ? "border-primary bg-primary/10 text-primary"
-                                : "border-gray-700 bg-surface text-foreground hover:bg-gray-700"
-                        }`}
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-black shadow-sm hover:bg-primary-hover whitespace-nowrap ml-auto sm:ml-0"
                     >
-                        <Filter size={16} />
-                        Filter
-                        {hasActiveFilters && (
-                            <span className="ml-1 rounded-full bg-primary text-black text-xs w-5 h-5 flex items-center justify-center font-bold">
-                                {(filterSite ? 1 : 0) + (filterEngineer ? 1 : 0)}
-                            </span>
-                        )}
+                        <Plus size={16} />
+                        <span className="hidden sm:inline">Add Manager</span>
                     </button>
-                </div>
-            </div>
-
-            {/* Filter Panel */}
-            {isFilterOpen && (
-                <div className="rounded-xl border border-gray-700 bg-panel p-4 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-semibold text-foreground">Filters</h3>
-                        {hasActiveFilters && (
-                            <button
-                                onClick={clearFilters}
-                                className="text-xs text-primary hover:text-primary/80 transition-colors"
-                            >
-                                Clear All
-                            </button>
-                        )}
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {/* Filter by Site */}
-                        <div>
-                            <label className="mb-1.5 block text-xs font-medium text-muted uppercase tracking-wider">Site</label>
-                            <div className="relative">
-                                <select
-                                    value={filterSite}
-                                    onChange={(e) => setFilterSite(e.target.value)}
-                                    className="w-full appearance-none rounded-lg border border-gray-700 bg-surface px-3 py-2 pr-8 text-sm text-foreground focus:border-primary focus:outline-none"
-                                >
-                                    <option value="">All Sites</option>
-                                    {sites.map((site) => (
-                                        <option key={site._id} value={site.name}>{site.name}</option>
-                                    ))}
-                                </select>
-                                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-                            </div>
-                        </div>
-
-                        {/* Filter by Site Engineer */}
-                        <div>
-                            <label className="mb-1.5 block text-xs font-medium text-muted uppercase tracking-wider">Site Engineer</label>
-                            <div className="relative">
-                                <select
-                                    value={filterEngineer}
-                                    onChange={(e) => setFilterEngineer(e.target.value)}
-                                    className="w-full appearance-none rounded-lg border border-gray-700 bg-surface px-3 py-2 pr-8 text-sm text-foreground focus:border-primary focus:outline-none"
-                                >
-                                    <option value="">All Engineers</option>
-                                    {engineers.map((eng) => (
-                                        <option key={eng} value={eng}>{eng}</option>
-                                    ))}
-                                </select>
-                                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="rounded-xl border border-gray-700 bg-panel p-5 shadow-sm">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted">Total Managers</span>
-                        <div className="rounded-lg bg-primary/10 p-2">
-                            <Users size={18} className="text-primary" />
-                        </div>
-                    </div>
-                    <div className="mt-2 text-3xl font-bold text-foreground">{pms.length}</div>
-                    <span className="text-xs text-muted">Registered project managers</span>
-                </div>
-                <div className="rounded-xl border border-gray-700 bg-panel p-5 shadow-sm">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted">Active Managers</span>
-                        <div className="rounded-lg bg-green-500/10 p-2">
-                            <Briefcase size={18} className="text-green-400" />
-                        </div>
-                    </div>
-                    <div className="mt-2 text-3xl font-bold text-foreground">{pms.filter(pm => pm.status === "Active").length}</div>
-                    <span className="text-xs text-green-400">Currently active</span>
-                </div>
-                <div className="rounded-xl border border-gray-700 bg-panel p-5 shadow-sm">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted">Sites Assigned</span>
-                        <div className="rounded-lg bg-blue-500/10 p-2">
-                            <Filter size={18} className="text-blue-400" />
-                        </div>
-                    </div>
-                    <div className="mt-2 text-3xl font-bold text-foreground">{new Set(pms.map(pm => pm.site).filter(Boolean)).size}</div>
-                    <span className="text-xs text-muted">Unique sites with PMs</span>
-                </div>
-                <div className="rounded-xl border border-gray-700 bg-panel p-5 shadow-sm">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted">Engineers Managed</span>
-                        <div className="rounded-lg bg-purple-500/10 p-2">
-                            <Users size={18} className="text-purple-400" />
-                        </div>
-                    </div>
-                    <div className="mt-2 text-3xl font-bold text-foreground">{allEngineers.filter(eng => pms.some(pm => pm.site && pm.site === eng.site)).length}</div>
-                    <span className="text-xs text-muted">Under PM supervision</span>
                 </div>
             </div>
 

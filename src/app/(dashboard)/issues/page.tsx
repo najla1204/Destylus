@@ -143,135 +143,119 @@ export default function IssuesPage() {
     return (
         <div className="flex flex-col gap-6">
             {/* Stat Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
                 <button
                     onClick={() => setStatusFilter(statusFilter === "Open" ? "all" : "Open")}
-                    className={`rounded-xl border p-5 bg-panel shadow-sm text-left transition-all hover:scale-[1.02] cursor-pointer ${
-                        statusFilter === "Open" ? "border-red-500 ring-1 ring-red-500/30" : "border-gray-700"
+                    className={`p-6 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between min-h-[150px] text-left ${
+                        statusFilter === "Open" ? "border-red-500 bg-red-500/5 ring-1 ring-red-500/20 shadow-lg shadow-red-500/5" : "border-gray-800 bg-[#0B0D11] hover:border-gray-700/50"
                     }`}
                 >
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted">Open Issues</span>
-                        <div className="rounded-lg bg-red-500/10 p-2">
-                            <AlertTriangle size={18} className="text-red-400" />
-                        </div>
-                    </div>
-                    <div className="mt-2 text-3xl font-bold text-foreground">{openCount}</div>
-                    <span className="text-xs text-red-400">Needs attention</span>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Open Issues</span>
+                    <div className="text-4xl font-bold text-white leading-none">{openCount}</div>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-red-500">Needs attention</span>
                 </button>
                 <button
                     onClick={() => setStatusFilter(statusFilter === "In Progress" ? "all" : "In Progress")}
-                    className={`rounded-xl border p-5 bg-panel shadow-sm text-left transition-all hover:scale-[1.02] cursor-pointer ${
-                        statusFilter === "In Progress" ? "border-blue-500 ring-1 ring-blue-500/30" : "border-gray-700"
+                    className={`p-6 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between min-h-[150px] text-left ${
+                        statusFilter === "In Progress" ? "border-blue-500 bg-blue-500/5 ring-1 ring-blue-500/20 shadow-lg shadow-blue-500/5" : "border-gray-800 bg-[#0B0D11] hover:border-gray-700/50"
                     }`}
                 >
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted">In Progress</span>
-                        <div className="rounded-lg bg-blue-500/10 p-2">
-                            <Clock size={18} className="text-blue-400" />
-                        </div>
-                    </div>
-                    <div className="mt-2 text-3xl font-bold text-foreground">{inProgressCount}</div>
-                    <span className="text-xs text-blue-400">Being worked on</span>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">In Progress</span>
+                    <div className="text-4xl font-bold text-white leading-none">{inProgressCount}</div>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-500">Being worked on</span>
                 </button>
                 <button
                     onClick={() => setStatusFilter(statusFilter === "Resolved" ? "all" : "Resolved")}
-                    className={`rounded-xl border p-5 bg-panel shadow-sm text-left transition-all hover:scale-[1.02] cursor-pointer ${
-                        statusFilter === "Resolved" ? "border-primary ring-1 ring-primary/30" : "border-gray-700"
+                    className={`p-6 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between min-h-[150px] text-left ${
+                        statusFilter === "Resolved" ? "border-yellow-500 bg-yellow-500/5 ring-1 ring-yellow-500/20 shadow-lg shadow-yellow-500/5" : "border-gray-800 bg-[#0B0D11] hover:border-gray-700/50"
                     }`}
                 >
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted">Resolved</span>
-                        <div className="rounded-lg bg-primary/10 p-2">
-                            <CheckCircle2 size={18} className="text-primary" />
-                        </div>
-                    </div>
-                    <div className="mt-2 text-3xl font-bold text-foreground">{resolvedCount}</div>
-                    <span className="text-xs text-primary">Completed</span>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Resolved</span>
+                    <div className="text-4xl font-bold text-white leading-none">{resolvedCount}</div>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-yellow-500">Completed</span>
                 </button>
-                <div className="rounded-xl border border-gray-700 p-5 bg-panel shadow-sm relative overflow-hidden">
-                    <div className={`absolute left-0 top-0 bottom-0 w-1 ${criticalCount > 0 ? "bg-red-500 animate-pulse" : "bg-gray-700"}`}></div>
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted">Critical Active</span>
-                        <div className="rounded-lg bg-orange-500/10 p-2">
-                            <AlertTriangle size={18} className="text-orange-400" />
-                        </div>
-                    </div>
-                    <div className={`mt-2 text-3xl font-bold ${criticalCount > 0 ? "text-red-400" : "text-foreground"}`}>{criticalCount}</div>
-                    <span className={`text-xs ${criticalCount > 0 ? "text-red-400" : "text-muted"}`}>
-                        {criticalCount > 0 ? "Urgent!" : "All clear"}
+                <div className={`p-6 rounded-2xl border transition-all flex flex-col justify-between min-h-[150px] ${criticalCount > 0 ? "border-red-500 bg-red-500/5 ring-1 ring-red-500/20 shadow-lg shadow-red-500/5" : "border-gray-800 bg-[#0B0D11]"}`}>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Critical Active</span>
+                    <div className={`text-4xl font-bold leading-none ${criticalCount > 0 ? "text-red-500" : "text-white"}`}>{criticalCount}</div>
+                    <span className={`text-[10px] uppercase tracking-[0.2em] font-bold ${criticalCount > 0 ? "text-red-500" : "text-muted-foreground/60"}`}>
+                        {criticalCount > 0 ? "Urgent Action" : "All clear"}
                     </span>
                 </div>
             </div>
 
             {/* Filter Bar */}
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center border-b border-gray-700 pb-4">
-                <div className="relative flex-1 min-w-[200px] max-w-sm">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={16} />
-                    <input
-                        type="text"
-                        placeholder="Search issues, sites, or people..."
-                        className="w-full rounded-lg border border-gray-700 bg-surface pl-10 pr-4 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                    <div className="flex items-center gap-1.5 text-xs text-muted">
-                        <Filter size={14} />
+            <div className="flex flex-col sm:flex-row gap-4 items-start xl:items-center xl:justify-between border-b border-gray-700 pb-4 mt-6">
+                <h2 className="text-lg font-bold text-foreground uppercase tracking-wider hidden xl:block">ISSUES ({filteredIssues.length})</h2>
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center w-full xl:w-auto">
+                    <div className="relative flex-1 min-w-[200px] max-w-sm w-full sm:w-auto">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Search issues, sites, or people..."
+                            className="w-full rounded-lg border border-gray-700 bg-surface pl-10 pr-4 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
                     </div>
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="rounded-lg border border-gray-700 bg-surface px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none appearance-none cursor-pointer"
+                
+                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
+                        <div className="flex items-center gap-1.5 text-xs text-muted pr-1">
+                            <Filter size={14} />
+                        </div>
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="rounded-lg border border-gray-700 bg-surface px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none appearance-none cursor-pointer flex-1 sm:flex-none max-w-[130px]"
+                        >
+                            <option value="all">Status</option>
+                            <option value="Open">Open</option>
+                            <option value="In Progress">Progressing</option>
+                            <option value="Resolved">Resolved</option>
+                        </select>
+                        <select
+                            value={priorityFilter}
+                            onChange={(e) => setPriorityFilter(e.target.value)}
+                            className="rounded-lg border border-gray-700 bg-surface px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none appearance-none cursor-pointer flex-1 sm:flex-none max-w-[130px]"
+                        >
+                            <option value="all">Priority</option>
+                            <option value="Critical">Critical</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                        <select
+                            value={siteFilter}
+                            onChange={(e) => setSiteFilter(e.target.value)}
+                            className="rounded-lg border border-gray-700 bg-surface px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none appearance-none cursor-pointer flex-1 sm:flex-none max-w-[130px] truncate"
+                        >
+                            <option value="all">All Sites</option>
+                            {sites.map(s => (
+                                <option key={s._id} value={s._id}>{s.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <button
+                        onClick={() => setIsAddOpen(true)}
+                        className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-black shadow-sm justify-center hover:bg-primary-hover hover:scale-[1.02] active:scale-[0.98] transition-all ml-auto w-full sm:w-auto mt-2 sm:mt-0 whitespace-nowrap"
                     >
-                        <option value="all">All Status</option>
-                        <option value="Open">Open</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Resolved">Resolved</option>
-                    </select>
-                    <select
-                        value={priorityFilter}
-                        onChange={(e) => setPriorityFilter(e.target.value)}
-                        className="rounded-lg border border-gray-700 bg-surface px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none appearance-none cursor-pointer"
-                    >
-                        <option value="all">All Priority</option>
-                        <option value="Critical">Critical</option>
-                        <option value="High">High</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Low">Low</option>
-                    </select>
-                    <select
-                        value={siteFilter}
-                        onChange={(e) => setSiteFilter(e.target.value)}
-                        className="rounded-lg border border-gray-700 bg-surface px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none appearance-none cursor-pointer"
-                    >
-                        <option value="all">All Sites</option>
-                        {sites.map(s => (
-                            <option key={s._id} value={s._id}>{s.name}</option>
-                        ))}
-                    </select>
+                        <Plus size={16} /> Raise Issue
+                    </button>
                 </div>
-                <button
-                    onClick={() => setIsAddOpen(true)}
-                    className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-black shadow-sm hover:bg-primary-hover hover:scale-[1.02] active:scale-[0.98] transition-all ml-auto"
-                >
-                    <Plus size={16} /> Raise Issue
-                </button>
             </div>
 
             {/* Issues Table */}
             <div className="overflow-x-auto rounded-xl border border-gray-700 bg-panel shadow-sm">
                 <table className="w-full text-left text-sm">
-                    <thead className="bg-surface text-muted border-b border-gray-700">
-                        <tr>
-                            <th className="px-4 py-3 font-semibold uppercase tracking-wider">Issue</th>
-                            <th className="px-4 py-3 font-semibold uppercase tracking-wider">Site</th>
-                            <th className="px-4 py-3 font-semibold uppercase tracking-wider">Raised By</th>
-                            <th className="px-4 py-3 font-semibold uppercase tracking-wider">Priority</th>
-                            <th className="px-4 py-3 font-semibold uppercase tracking-wider">Status</th>
-                            <th className="px-4 py-3 font-semibold uppercase tracking-wider">Reported</th>
-                            <th className="px-4 py-3 font-semibold uppercase tracking-wider text-right">Actions</th>
+                    <thead>
+                        <tr className="bg-surface border-b border-gray-700">
+                            <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Issue</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Site</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Raised By</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Priority</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Status</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Reported</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-700">

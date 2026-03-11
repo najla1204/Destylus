@@ -1,4 +1,4 @@
-// src/lib/db.ts
+
 import mongoose from 'mongoose';
 
 // MongoDB connection with caching
@@ -72,13 +72,10 @@ const attendanceSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// Create an index for faster lookups
 attendanceSchema.index({ employeeId: 1, checkInTime: -1 });
 
-// Create the model if it doesn't exist
 const Attendance = mongoose.models.Attendance || mongoose.model('Attendance', attendanceSchema);
 
-// User schema for authentication
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
@@ -90,7 +87,7 @@ const userSchema = new mongoose.Schema({
   },
   employeeId: { type: String, required: true, unique: true },
   site: { type: String },
-  allocatedSites: [{ type: String }], // For PMs to track which sites they manage
+  allocatedSites: [{ type: String }],
   isActive: { type: Boolean, default: true },
   lastLogin: { type: Date },
   currentStatus: {
@@ -100,15 +97,12 @@ const userSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// Create indexes for faster lookups
 userSchema.index({ email: 1 });
 userSchema.index({ employeeId: 1 });
 userSchema.index({ role: 1 });
 
-// Create the model if it doesn't exist
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 
-// Real-time session tracking schema
 const sessionSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   employeeId: { type: String, required: true },
@@ -120,13 +114,11 @@ const sessionSchema = new mongoose.Schema({
   userAgent: { type: String }
 }, { timestamps: true });
 
-// Create indexes
 sessionSchema.index({ userId: 1, isActive: 1 });
 sessionSchema.index({ employeeId: 1, isActive: 1 });
 
 const Session = mongoose.models.Session || mongoose.model('Session', sessionSchema);
 
-// Site schema
 const siteSchema = new mongoose.Schema({
   name: { type: String, required: true },
   locationName: { type: String, required: true },
@@ -143,7 +135,6 @@ const siteSchema = new mongoose.Schema({
 
 const Site = mongoose.models.Site || mongoose.model('Site', siteSchema);
 
-// Labour schema
 const labourSchema = new mongoose.Schema({
   name: { type: String, required: true },
   mobile: { type: String },
@@ -159,19 +150,28 @@ labourSchema.index({ siteId: 1 });
 
 const Labour = mongoose.models.Labour || mongoose.model('Labour', labourSchema);
 
-// Material schema
 const materialSchema = new mongoose.Schema({
   item: { type: String, required: true },
   quantity: { type: Number, required: true },
   unit: { type: String, required: true },
-  siteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Site', required: true }
+  siteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Site', required: true },
+  photo: { type: String },
+  lorryNo: { type: String },
+  lorryMeasurements: { type: String },
+  status: {
+    type: String,
+    enum: ['Pending', 'Approved'],
+    default: 'Pending'
+  },
+  addedBy: { type: String },
+  approvedBy: { type: String },
+  approvedAt: { type: Date }
 }, { timestamps: true });
 
 materialSchema.index({ siteId: 1 });
 
 const Material = mongoose.models.Material || mongoose.model('Material', materialSchema);
 
-// Issue schema
 const issueSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String },
@@ -187,6 +187,7 @@ const issueSchema = new mongoose.Schema({
   },
   raisedBy: { type: String },
   raisedByRole: { type: String },
+  sentTo: [{ type: String }],
   siteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Site', required: true }
 }, { timestamps: true });
 
@@ -194,7 +195,6 @@ issueSchema.index({ siteId: 1 });
 
 const Issue = mongoose.models.Issue || mongoose.model('Issue', issueSchema);
 
-// PettyCash schema
 const pettyCashSchema = new mongoose.Schema({
   siteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Site', required: true },
   title: { type: String, required: true },
@@ -212,4 +212,98 @@ pettyCashSchema.index({ siteId: 1 });
 
 const PettyCashTransaction = mongoose.models.PettyCashTransaction || mongoose.model('PettyCashTransaction', pettyCashSchema);
 
-export { Attendance, User, Session, Site, Labour, Material, Issue, PettyCashTransaction };
+const aggregateLabourAttendanceSchema = new mongoose.Schema({
+  siteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Site', required: true },
+  date: { type: Date, required: true },
+  skilledCount: { type: Number, default: 0 },
+  unskilledCount: { type: Number, default: 0 },
+  supervisorCount: { type: Number, default: 0 },
+  entries: [{
+    workerType: { type: String, required: true },
+    count: { type: Number, required: true },
+    photo: { type: String },
+    name: { type: String },
+    notes: { type: String }
+  }],
+  totalCount: { type: Number, default: 0 },
+  loggedBy: { type: String, required: true },
+  notes: { type: String }
+}, { timestamps: true });
+
+aggregateLabourAttendanceSchema.index({ siteId: 1, date: -1 });
+
+const AggregateLabourAttendance = mongoose.models.AggregateLabourAttendance || mongoose.model('AggregateLabourAttendance', aggregateLabourAttendanceSchema);
+
+const stockRefundRequestSchema = new mongoose.Schema({
+  siteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Site', required: true },
+  materialName: { type: String, required: true },
+  quantity: { type: Number, required: true },
+  unit: { type: String, required: true },
+  reason: { type: String, required: true },
+  requestedBy: { type: String, required: true },
+  status: {
+    type: String,
+    enum: ['Pending', 'Approved', 'Rejected'],
+    default: 'Pending'
+  },
+  reviewedBy: { type: String },
+  reviewedAt: { type: Date }
+}, { timestamps: true });
+
+stockRefundRequestSchema.index({ siteId: 1, status: 1 });
+
+const StockRefundRequest = mongoose.models.StockRefundRequest || mongoose.model('StockRefundRequest', stockRefundRequestSchema);
+
+// Extra Material Request schema
+const extraMaterialRequestSchema = new mongoose.Schema({
+  siteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Site', required: true },
+  items: [{
+    name: { type: String, required: true },
+    quantity: { type: Number, required: true },
+    unit: { type: String, required: true }
+  }],
+  reason: { type: String },
+  requestedBy: { type: String, required: true },
+  status: {
+    type: String,
+    enum: ['Pending', 'Approved', 'Rejected'],
+    default: 'Pending'
+  },
+  rejectionReason: { type: String },
+  reviewedBy: { type: String },
+  reviewedAt: { type: Date }
+}, { timestamps: true });
+
+extraMaterialRequestSchema.index({ siteId: 1, status: 1 });
+
+const ExtraMaterialRequest = mongoose.models.ExtraMaterialRequest || mongoose.model('ExtraMaterialRequest', extraMaterialRequestSchema);
+
+const leaveSchema = new mongoose.Schema({
+  employeeName: { type: String, required: true },
+  employeeId: { type: String, required: true, index: true },
+  type: { 
+    type: String, 
+    required: true,
+    enum: ['Casual Leave', 'Sick Leave', 'Emergency Leave']
+  },
+  from: { type: Date, required: true },
+  to: { type: Date, required: true },
+  reason: { type: String, required: true },
+  status: { 
+    type: String, 
+    enum: ['Pending', 'Approved', 'Rejected'],
+    default: 'Pending'
+  },
+  reviewedBy: { type: String },
+  reviewedAt: { type: Date }
+}, { timestamps: true });
+
+leaveSchema.index({ employeeId: 1, createdAt: -1 });
+
+const Leave = mongoose.models.Leave || mongoose.model('Leave', leaveSchema);
+
+export { 
+  Attendance, User, Session, Site, Labour, Material, Issue, 
+  PettyCashTransaction, AggregateLabourAttendance, StockRefundRequest,
+  ExtraMaterialRequest, Leave
+};

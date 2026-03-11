@@ -1,63 +1,75 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, Mail, Phone, MapPin, Briefcase, Hash, Calendar, Edit2, Save, X } from "lucide-react";
+import { User, Mail, Briefcase, Edit2, Save, X } from "lucide-react";
 
 interface UserProfile {
     name: string;
-    employeeId: string;
     role: string;
-    phone: string;
     email: string;
-    address: string;
-    dob: string;
-    joiningDate: string;
 }
 
-const engineerProfile: UserProfile = {
-    name: "Alex Morgan",
-    employeeId: "ENG-2023-042",
-    role: "Senior Site Engineer",
-    phone: "+91 98765 43210",
-    email: "alex.morgan@destylus.com",
-    address: "Block B, Green Valley Apartments, Downtown District",
-    dob: "1990-05-15",
-    joiningDate: "2023-01-10",
-};
-
-const pmProfile: UserProfile = {
-    name: "Sarah Connor",
-    employeeId: "PM-2022-001",
-    role: "Project Manager",
-    phone: "+91 98765 12345",
-    email: "sarah.connor@destylus.com",
-    address: "Skyline Tower, Executive Suite 404, Business District",
-    dob: "1985-08-20",
-    joiningDate: "2022-03-15",
+const defaultProfiles: Record<string, UserProfile> = {
+    Engineer: {
+        name: "Alex Morgan",
+        role: "Site Engineer",
+        email: "alex.morgan@destylus.com",
+    },
+    "Site Engineer": {
+        name: "Alex Morgan",
+        role: "Site Engineer",
+        email: "alex.morgan@destylus.com",
+    },
+    "Project Manager": {
+        name: "Sarah Connor",
+        role: "Project Manager",
+        email: "sarah.connor@destylus.com",
+    },
+    "HR Manager": {
+        name: "Diana Prince",
+        role: "HR Manager",
+        email: "diana.prince@destylus.com",
+    },
 };
 
 export default function ProfilePage() {
     const [isEditing, setIsEditing] = useState(false);
-    const [profile, setProfile] = useState<UserProfile>(engineerProfile);
-    const [formData, setFormData] = useState<UserProfile>(engineerProfile);
+    const [profile, setProfile] = useState<UserProfile>({
+        name: "",
+        role: "",
+        email: "",
+    });
+    const [formData, setFormData] = useState<UserProfile>({
+        name: "",
+        role: "",
+        email: "",
+    });
 
     useEffect(() => {
         const role = localStorage.getItem("userRole") || "Engineer";
+        const userName = localStorage.getItem("userName") || "";
         const storageKey = `destylus_user_profile_${role}`;
         const savedProfile = localStorage.getItem(storageKey);
 
         if (savedProfile) {
             const parsed = JSON.parse(savedProfile);
-            if (JSON.stringify(parsed) !== JSON.stringify(profile)) {
-                setProfile(parsed);
-                setFormData(parsed);
-            }
+            // Only keep the 3 relevant fields
+            const cleanProfile: UserProfile = {
+                name: parsed.name || userName || defaultProfiles[role]?.name || "User",
+                role: parsed.role || role,
+                email: parsed.email || defaultProfiles[role]?.email || "",
+            };
+            setProfile(cleanProfile);
+            setFormData(cleanProfile);
         } else {
-            const initialProfile = role === "Project Manager" ? pmProfile : engineerProfile;
-            if (JSON.stringify(initialProfile) !== JSON.stringify(profile)) {
-                setProfile(initialProfile);
-                setFormData(initialProfile);
-            }
+            const fallback = defaultProfiles[role] || defaultProfiles["Engineer"];
+            const initialProfile: UserProfile = {
+                name: userName || fallback.name,
+                role: role || fallback.role,
+                email: fallback.email,
+            };
+            setProfile(initialProfile);
+            setFormData(initialProfile);
         }
     }, []);
 
@@ -77,12 +89,22 @@ export default function ProfilePage() {
         setIsEditing(false);
     };
 
+    const getAvatarColor = () => {
+        if (profile.role.includes("Project") && profile.role.includes("Manager")) {
+            return "bg-orange-300 border-orange-400/20";
+        }
+        if (profile.role === "HR Manager") {
+            return "bg-primary border-primary/20";
+        }
+        return "bg-orange-100 border-orange-200";
+    };
+
     return (
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="max-w-3xl mx-auto space-y-6">
             <div className="flex items-center justify-between border-b border-gray-700 pb-6">
                 <div>
                     <h1 className="text-3xl font-bold text-foreground">My Profile</h1>
-                    <p className="text-muted">Manage your personal and professional information.</p>
+                    <p className="text-muted">Manage your profile information.</p>
                 </div>
                 {!isEditing ? (
                     <button
@@ -116,29 +138,23 @@ export default function ProfilePage() {
                 {/* Profile Card / Avatar */}
                 <div className="col-span-1">
                     <div className="bg-panel border border-gray-700 rounded-xl p-6 flex flex-col items-center text-center">
-                        <div className={`w-32 h-32 rounded-full flex items-center justify-center mb-4 text-4xl font-bold text-black border-2
-                            ${profile.role.includes('Manager') && profile.role.includes('Project') ? 'bg-orange-300 border-orange-400/20' :
-                                profile.role === 'HR Manager' ? 'bg-primary border-primary/20' :
-                                    'bg-orange-100 border-orange-200'}`}>
+                        <div className={`w-32 h-32 rounded-full flex items-center justify-center mb-4 text-4xl font-bold text-black border-2 ${getAvatarColor()}`}>
                             {profile.name.charAt(0)}
                         </div>
                         <h2 className="text-xl font-bold text-foreground">{profile.name}</h2>
                         <p className="text-muted">{profile.role}</p>
-                        <div className="mt-4 px-3 py-1 bg-surface rounded-full text-xs font-mono text-gray-400">
-                            ID: {profile.employeeId}
-                        </div>
                     </div>
                 </div>
 
-                {/* Details Form/View */}
+                {/* Details */}
                 <div className="col-span-1 md:col-span-2 space-y-6">
                     <div className="bg-panel border border-gray-700 rounded-xl p-6 space-y-6">
                         <h3 className="text-lg font-semibold text-foreground border-b border-gray-700 pb-2 mb-4">
-                            Personal Details
+                            Profile Details
                         </h3>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Name */}
+                        <div className="space-y-6">
+                            {/* Full Name */}
                             <div className="space-y-2">
                                 <label className="text-sm text-muted flex items-center gap-2">
                                     <User size={14} /> Full Name
@@ -155,59 +171,7 @@ export default function ProfilePage() {
                                 )}
                             </div>
 
-                            {/* Working Field */}
-                            <div className="space-y-2">
-                                <label className="text-sm text-muted flex items-center gap-2">
-                                    <Briefcase size={14} /> Working Field / Role
-                                </label>
-                                {isEditing ? (
-                                    <input
-                                        type="text"
-                                        value={formData.role}
-                                        onChange={(e) => handleInputChange("role", e.target.value)}
-                                        className="w-full bg-surface p-2 rounded border border-gray-600 focus:border-primary focus:outline-none text-foreground"
-                                    />
-                                ) : (
-                                    <p className="text-foreground font-medium text-lg">{profile.role}</p>
-                                )}
-                            </div>
-
-                            {/* Employee ID (Usually Read-only even in edit mode, but user asked to view/edit) */}
-                            <div className="space-y-2">
-                                <label className="text-sm text-muted flex items-center gap-2">
-                                    <Hash size={14} /> Employee ID
-                                </label>
-                                <div className="text-foreground font-medium text-lg opacity-70 cursor-not-allowed" title="Employee ID cannot be changed">
-                                    {profile.employeeId}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-panel border border-gray-700 rounded-xl p-6 space-y-6">
-                        <h3 className="text-lg font-semibold text-foreground border-b border-gray-700 pb-2 mb-4">
-                            Contact Information
-                        </h3>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Phone */}
-                            <div className="space-y-2">
-                                <label className="text-sm text-muted flex items-center gap-2">
-                                    <Phone size={14} /> Phone Number
-                                </label>
-                                {isEditing ? (
-                                    <input
-                                        type="tel"
-                                        value={formData.phone}
-                                        onChange={(e) => handleInputChange("phone", e.target.value)}
-                                        className="w-full bg-surface p-2 rounded border border-gray-600 focus:border-primary focus:outline-none text-foreground"
-                                    />
-                                ) : (
-                                    <p className="text-foreground font-medium text-lg">{profile.phone}</p>
-                                )}
-                            </div>
-
-                            {/* Email */}
+                            {/* Email ID */}
                             <div className="space-y-2">
                                 <label className="text-sm text-muted flex items-center gap-2">
                                     <Mail size={14} /> Email ID
@@ -224,66 +188,17 @@ export default function ProfilePage() {
                                 )}
                             </div>
 
-                            {/* Address */}
-                            <div className="space-y-2 md:col-span-2">
+                            {/* Role */}
+                            <div className="space-y-2">
                                 <label className="text-sm text-muted flex items-center gap-2">
-                                    <MapPin size={14} /> Address
+                                    <Briefcase size={14} /> Role
                                 </label>
-                                {isEditing ? (
-                                    <textarea
-                                        value={formData.address}
-                                        onChange={(e) => handleInputChange("address", e.target.value)}
-                                        className="w-full bg-surface p-2 rounded border border-gray-600 focus:border-primary focus:outline-none text-foreground min-h-[80px]"
-                                    />
-                                ) : (
-                                    <p className="text-foreground font-medium text-lg">{profile.address}</p>
-                                )}
+                                <p className="text-foreground font-medium text-lg opacity-70 cursor-not-allowed" title="Role cannot be changed">
+                                    {profile.role}
+                                </p>
                             </div>
                         </div>
                     </div>
-
-                    <div className="bg-panel border border-gray-700 rounded-xl p-6 space-y-6">
-                        <h3 className="text-lg font-semibold text-foreground border-b border-gray-700 pb-2 mb-4">
-                            Important Dates
-                        </h3>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* DOB */}
-                            <div className="space-y-2">
-                                <label className="text-sm text-muted flex items-center gap-2">
-                                    <Calendar size={14} /> Date of Birth
-                                </label>
-                                {isEditing ? (
-                                    <input
-                                        type="date"
-                                        value={formData.dob}
-                                        onChange={(e) => handleInputChange("dob", e.target.value)}
-                                        className="w-full bg-surface p-2 rounded border border-gray-600 focus:border-primary focus:outline-none text-foreground"
-                                    />
-                                ) : (
-                                    <p className="text-foreground font-medium text-lg">{profile.dob}</p>
-                                )}
-                            </div>
-
-                            {/* Joining Date */}
-                            <div className="space-y-2">
-                                <label className="text-sm text-muted flex items-center gap-2">
-                                    <Briefcase size={14} /> Date of Joining
-                                </label>
-                                {isEditing ? (
-                                    <input
-                                        type="date"
-                                        value={formData.joiningDate}
-                                        onChange={(e) => handleInputChange("joiningDate", e.target.value)}
-                                        className="w-full bg-surface p-2 rounded border border-gray-600 focus:border-primary focus:outline-none text-foreground"
-                                    />
-                                ) : (
-                                    <p className="text-foreground font-medium text-lg">{profile.joiningDate}</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
             </div>
         </div>

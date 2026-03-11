@@ -12,32 +12,59 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    // Simulate network delay for a smoother feel
-    setTimeout(() => {
-      // Hardcoded HR credentials as per requirements
-      const credentials = {
-        hr: { user: "rajakumaran", email: "rajakumaran.work@gmail.com", pass: "rajaraja27", role: "HR Manager" },
-      };
+    try {
+      // First, try to login using the API
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: username, password }),
+      });
 
-      const validHR =
-        (username === credentials.hr.user || username === credentials.hr.email) && password === credentials.hr.pass;
+      const data = await response.json();
 
-      if (validHR) {
-        // In a real app, you'd set a cookie or token here
-        localStorage.setItem("userRole", credentials.hr.role);
-        localStorage.setItem("userName", "HR Manager");
-
-        router.push("/dashboard");
+      if (response.ok && data.user) {
+        localStorage.setItem("userRole", data.user.role || "");
+        localStorage.setItem("userName", data.user.name || "");
+        localStorage.setItem("employeeId", data.user.employeeId || "");
+        
+        // Redirect based on role
+        if (data.user.role === 'project_manager') {
+          router.push("/dashboard");
+        } else if (data.user.role === 'engineer') {
+          router.push("/dashboard");
+        } else {
+          router.push("/dashboard");
+        }
       } else {
-        setError("Invalid credentials. Please try again.");
-        setLoading(false);
+        // Fallback for hardcoded HR credentials if API login fails
+        const credentials = {
+          hr: { user: "rajakumaran", email: "rajakumaran.work@gmail.com", pass: "rajaraja27", role: "HR Manager" },
+        };
+
+        const validHR =
+          (username === credentials.hr.user || username === credentials.hr.email) && password === credentials.hr.pass;
+
+        if (validHR) {
+          localStorage.setItem("userRole", credentials.hr.role);
+          localStorage.setItem("userName", "HR Manager");
+          localStorage.setItem("employeeId", "HR-0001"); // Mock employeeId for the fallback HR user
+          router.push("/dashboard");
+        } else {
+          setError(data.error || "Invalid credentials. Please try again.");
+          setLoading(false);
+        }
       }
-    }, 800);
+    } catch (err) {
+      setError("An error occurred during login. Please try again.");
+      setLoading(false);
+    }
   };
 
   return (

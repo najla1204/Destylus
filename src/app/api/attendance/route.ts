@@ -22,6 +22,19 @@ export async function GET(request: Request) {
     if (site) query.site = site;
     if (role) query.role = role;
 
+    const fromDate = searchParams.get('from') || searchParams.get('startDate');
+    const toDate = searchParams.get('to') || searchParams.get('endDate');
+    
+    if (fromDate || toDate) {
+      query.checkInTime = {};
+      if (fromDate) query.checkInTime.$gte = new Date(fromDate);
+      if (toDate) {
+        const end = new Date(toDate);
+        end.setHours(23, 59, 59, 999);
+        query.checkInTime.$lte = end;
+      }
+    }
+
     const attendanceLogs = await Attendance.find(query).sort({ checkInTime: -1 });
     return NextResponse.json({ attendanceLogs });
   } catch (error) {

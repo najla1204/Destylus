@@ -30,21 +30,25 @@ export default function MonthlyAttendancePage() {
 
             {/* Stats Summary */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-panel p-4 rounded-xl border border-gray-700">
-                    <span className="text-muted text-xs uppercase">Present</span>
-                    <p className="text-2xl font-bold text-success">24 Days</p>
+                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Present</span>
+                    <div className="text-4xl font-bold text-white leading-none">24 Days</div>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-success">Attendance</span>
                 </div>
-                <div className="bg-panel p-4 rounded-xl border border-gray-700">
-                    <span className="text-muted text-xs uppercase">Absent</span>
-                    <p className="text-2xl font-bold text-red-400">01 Day</p>
+                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Absent</span>
+                    <div className="text-4xl font-bold text-white leading-none">01 Day</div>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-red-500">Missed</span>
                 </div>
-                <div className="bg-panel p-4 rounded-xl border border-gray-700">
-                    <span className="text-muted text-xs uppercase">Leaves</span>
-                    <p className="text-2xl font-bold text-orange-400">02 Days</p>
+                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Leaves</span>
+                    <div className="text-4xl font-bold text-white leading-none">02 Days</div>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-yellow-500">Scheduled</span>
                 </div>
-                <div className="bg-panel p-4 rounded-xl border border-gray-700">
-                    <span className="text-muted text-xs uppercase">Overtime</span>
-                    <p className="text-2xl font-bold text-blue-400">12 Hrs</p>
+                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Overtime</span>
+                    <div className="text-4xl font-bold text-white leading-none">12 Hrs</div>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-400">Extra Time</span>
                 </div>
             </div>
 

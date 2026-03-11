@@ -1,9 +1,10 @@
 "use client";
 
-import { Bell, Search, Calendar, ChevronRight } from "lucide-react";
+import { Bell, Search, Calendar, ChevronRight, Menu } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
+import ThemeToggle from "./ThemeToggle";
 
 // Reusing AttendanceType here or we can be loose with type as it varies between Leave and Attendance
 interface NotificationItem {
@@ -16,7 +17,11 @@ interface NotificationItem {
     actorName: string;
 }
 
-export default function Navbar() {
+interface NavbarProps {
+    onMenuClick: () => void;
+}
+
+export default function Navbar({ onMenuClick }: NavbarProps) {
     const [notifications, setNotifications] = useState<NotificationItem[]>([]);
     const [showDropdown, setShowDropdown] = useState(false);
     const [userRole, setUserRole] = useState("");
@@ -116,7 +121,6 @@ export default function Navbar() {
     const getPageTitle = (path: string) => {
         if (path.startsWith("/dashboard")) return "Dashboard";
         if (path.startsWith("/sites")) return "Sites";
-        if (path.startsWith("/projects")) return "Projects";
         if (path.startsWith("/project-managers")) return "Project Managers";
         if (path.startsWith("/engineers")) return "Engineers";
         if (path.startsWith("/attendance")) return "Attendance";
@@ -126,32 +130,92 @@ export default function Navbar() {
         return "Dashboard";
     };
 
+    const [dynamicTitle, setDynamicTitle] = useState("");
+    const [dynamicSubtitle, setDynamicSubtitle] = useState("");
+
+    useEffect(() => {
+        const staticTitle = getPageTitle(pathname);
+        setDynamicTitle(staticTitle);
+        setDynamicSubtitle("");
+
+        // If it's a site details page, try to get the site name and location
+        if (pathname.startsWith("/sites/") && pathname.split("/").length === 3) {
+            const siteId = pathname.split("/")[2];
+            
+            const fetchSiteDetails = async () => {
+                try {
+                    // Try to get from localStorage first to avoid flicker
+                    const savedSites = localStorage.getItem("destylus_dashboard_sites_v4");
+                    if (savedSites) {
+                        const parsed = JSON.parse(savedSites);
+                        const found = parsed.find((s: any) => s._id === siteId || s.id === siteId);
+                        if (found) {
+                            setDynamicTitle(found.name);
+                            setDynamicSubtitle(found.locationName || "");
+                            return;
+                        }
+                    }
+
+                    // Fallback to API if not in localStorage or to get latest
+                    const res = await fetch(`/api/sites/${siteId}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && data.name) {
+                            setDynamicTitle(data.name);
+                            setDynamicSubtitle(data.locationName || "");
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error fetching site details for navbar:", err);
+                }
+            };
+            
+            fetchSiteDetails();
+        }
+    }, [pathname]);
+
     return (
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between bg-background px-8 border-b border-gray-700/50">
-            <div className="flex items-center">
-                <h1 className="text-xl font-bold text-foreground">{getPageTitle(pathname)}</h1>
+        <header className="sticky top-0 z-40 flex h-20 items-center justify-between bg-background/80 backdrop-blur-xl px-4 md:px-8 border-b border-black/5 dark:border-white/5 shadow-2xl">
+            <div className="flex items-center gap-4">
+                <button 
+                    onClick={onMenuClick}
+                    className="lg:hidden flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 dark:text-slate-400 hover:bg-black/[0.05] dark:hover:bg-white/[0.05] hover:text-foreground transition-all border border-black/5 dark:border-white/5"
+                >
+                    <Menu size={20} />
+                </button>
+                <div className="flex flex-col justify-center">
+                    <h1 className="text-xl md:text-2xl font-bold text-foreground leading-tight font-serif tracking-tight uppercase whitespace-nowrap">{dynamicTitle}</h1>
+                    {dynamicSubtitle && (
+                        <p className="text-[10px] text-primary font-bold flex items-center gap-2 uppercase tracking-[0.2em] mt-1">
+                            <span className="h-1 w-1 rounded-full bg-primary/80 animate-pulse" />
+                            {dynamicSubtitle}
+                        </p>
+                    )}
+                </div>
             </div>
 
-            <div className="flex items-center gap-4">
-                <div className="relative w-[250px] md:w-[300px]">
-                    <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+            <div className="flex items-center gap-6">
+                <div className="relative w-[300px] group hidden md:block">
+                    <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors" />
                     <input
                         type="text"
-                        placeholder="Search projects, materials..."
-                        className="w-full rounded-md border border-gray-700 bg-surface py-2 pl-10 pr-4 text-sm text-foreground transition-colors focus:border-primary focus:outline-none"
+                        placeholder="Search Intelligence..."
+                        className="w-full rounded-2xl border border-black/5 dark:border-white/5 bg-black/[0.03] dark:bg-white/[0.03] py-2.5 pl-11 pr-4 text-sm text-foreground transition-all focus:border-primary/50 focus:bg-black/[0.05] dark:focus:bg-white/[0.05] focus:outline-none focus:ring-4 focus:ring-primary/5 shadow-inner"
                         onChange={(e) => handleSearch(e.target.value)}
                         value={searchParams.get("q") || ""}
                     />
                 </div>
 
+                <ThemeToggle />
+
                 <div className="relative" ref={dropdownRef}>
                     <button
                         onClick={() => setShowDropdown(!showDropdown)}
-                        className="relative flex h-10 w-10 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface hover:text-foreground"
+                        className="relative flex h-11 w-11 items-center justify-center rounded-2xl text-slate-600 dark:text-slate-400 transition-all hover:bg-black/[0.05] dark:hover:bg-white/[0.05] hover:text-primary border border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02]"
                     >
                         <Bell size={20} />
                         {notifications.length > 0 && (
-                            <span className="absolute right-2 top-2 h-4 min-w-[16px] px-1 flex items-center justify-center rounded-full border border-background bg-error text-[10px] font-bold text-white">
+                            <span className="absolute -right-1 -top-1 h-5 min-w-[20px] px-1.5 flex items-center justify-center rounded-full border-2 border-background bg-error text-[10px] font-bold text-white shadow-lg">
                                 {notifications.length}
                             </span>
                         )}
@@ -178,7 +242,7 @@ export default function Navbar() {
                                         <p className="text-xs text-muted mt-1">You're all caught up!</p>
                                     </div>
                                 ) : (
-                                    <div className="divide-y divide-gray-700">
+                                    <div className="border-t border-white/5 p-4">
                                         {notifications.map((notif) => (
                                             <Link
                                                 key={notif.id}

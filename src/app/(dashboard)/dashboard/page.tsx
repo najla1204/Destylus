@@ -33,6 +33,7 @@ import Link from "next/link";
 // Mock Data for Sites
 interface Site {
     id: string;
+    _id?: string;
     name: string;
     location: string;
     manager: string;
@@ -212,6 +213,78 @@ function DashboardContent() {
     };
 
 
+    // Default / Engineer View State
+    const [engineerSites, setEngineerSites] = useState<Site[]>([]);
+    const [activeSiteId, setActiveSiteId] = useState<string>("All");
+    const [dashData, setDashData] = useState<any>({
+        materials: [],
+        issues: [],
+        pettyCash: [],
+        attendance: { engineerRecords: [], labourRecords: [], totalRecords: 0 }
+    });
+    const [loadingData, setLoadingData] = useState(false);
+
+    useEffect(() => {
+        if (userRole === "Engineer" || userRole === "engineer" || userRole === "Site Engineer") {
+            setLoadingData(true);
+            fetch("/api/sites")
+                .then(res => res.json())
+                .then(data => {
+                    const assigned = data;
+                    setEngineerSites(assigned);
+                    if (assigned.length > 0) setActiveSiteId(assigned[0]._id || assigned[0].id);
+                })
+                .finally(() => setLoadingData(false));
+        }
+    }, [userRole]);
+
+    useEffect(() => {
+        if (activeSiteId && (userRole === "Engineer" || userRole === "engineer" || userRole === "Site Engineer")) {
+            setLoadingData(true);
+            const siteIdsToFetch = activeSiteId === "All" ? engineerSites.map(s => s._id || s.id) : [activeSiteId];
+            
+            if (siteIdsToFetch.length === 0) {
+               setDashData({ materials: [], issues: [], pettyCash: [], attendance: { engineerRecords: [], labourRecords: [], totalRecords: 0 }, leaves: [] });
+               setLoadingData(false);
+               return;
+            }
+
+            const empId = localStorage.getItem("employeeId") || ""; 
+
+            Promise.all([
+                 ...siteIdsToFetch.map(id => fetch(`/api/sites/${id}/materials`).then(res => res.json())),
+                 ...siteIdsToFetch.map(id => fetch(`/api/sites/${id}/issues`).then(res => res.json())),
+                 ...siteIdsToFetch.map(id => fetch(`/api/sites/${id}/petty-cash`).then(res => res.json())),
+                 ...siteIdsToFetch.map(id => fetch(`/api/sites/${id}/attendance`).then(res => res.json())),
+                 fetch(`/api/leave?employeeId=${empId}&role=${userRole}`).then(res => res.json())
+            ]).then((results) => {
+                 const numSites = siteIdsToFetch.length;
+                 const mats = results.slice(0, numSites).flat();
+                 const iss = results.slice(numSites, numSites*2).flat();
+                 const pcDataRaw = results.slice(numSites*2, numSites*3);
+                 const pcData = pcDataRaw.flatMap(p => p.transactions || p || []);
+                 const attRaw = results.slice(numSites*3, numSites*4);
+                 
+                 const combinedAttendance = {
+                     engineerRecords: attRaw.flatMap(a => a.engineerRecords || []),
+                     labourRecords: attRaw.flatMap(a => a.labourRecords || []),
+                     totalRecords: attRaw.reduce((acc, a) => acc + (a.totalRecords || 0), 0)
+                 };
+                 const leavesData = results[numSites*4] || [];
+                 const leaves = Array.isArray(leavesData) ? leavesData : (leavesData.leaveRequests || []);
+
+                 setDashData({
+                     materials: mats,
+                     issues: iss,
+                     pettyCash: pcData,
+                     attendance: combinedAttendance,
+                     leaves: leaves
+                 });
+            }).catch(e => console.error(e))
+            .finally(() => setLoadingData(false));
+        }
+    }, [activeSiteId, userRole, engineerSites]);
+
     // Render HR View
     if (userRole === "HR Manager") {
         // Prepare Chart Data
@@ -232,58 +305,31 @@ function DashboardContent() {
 
         return (
             <div className="space-y-8">
-                {/* Header */}
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold text-foreground font-serif tracking-wide uppercase">HR Overview</h1>
-                        <p className="text-muted tracking-widest text-xs uppercase mt-1">Manage your Organization Metrics</p>
-                    </div>
-                </div>
 
                 {/* Premium Stats Grid */}
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                    <div className="rounded-2xl bg-panel border-gray-700 border-b-4 border-b-[#FFC107] p-6 shadow-xl relative overflow-hidden group hover:border-gray-700 transition-colors">
-                        <div className="flex items-center justify-between z-10 relative">
-                            <span className="text-xs uppercase tracking-widest font-semibold text-gray-400">Total Employees</span>
-                            <div className="bg-[#FFC107]/10 p-2 rounded-lg">
-                                <Users size={20} className="text-[#FFC107]" />
-                            </div>
-                        </div>
-                        <div className="mt-4 text-4xl font-bold text-white z-10 relative">{employees.length}</div>
-                        <span className="text-xs text-gray-500 z-10 relative block mt-2">ACTIVE WORKFORCE</span>
+                    <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Total Employees</span>
+                        <div className="text-4xl font-bold text-white leading-none">{employees.length}</div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-500">Active Workforce</span>
                     </div>
                     
-                    <div className="rounded-2xl bg-panel border-gray-700 border-b-4 border-b-[#FFC107] p-6 shadow-xl relative overflow-hidden group hover:border-gray-700 transition-colors">
-                        <div className="flex items-center justify-between z-10 relative">
-                            <span className="text-xs uppercase tracking-widest font-semibold text-gray-400">Active Sites</span>
-                            <div className="bg-[#FFC107]/10 p-2 rounded-lg">
-                                <Building size={20} className="text-[#FFC107]" />
-                            </div>
-                        </div>
-                        <div className="mt-4 text-4xl font-bold text-white z-10 relative">{sites.length}</div>
-                        <span className="text-xs text-gray-500 z-10 relative block mt-2">ONGOING PROJECTS</span>
+                    <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Active Sites</span>
+                        <div className="text-4xl font-bold text-white leading-none">{sites.length}</div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-yellow-500">Ongoing Projects</span>
                     </div>
 
-                    <div className="rounded-2xl bg-panel border-gray-700 border-b-4 border-b-[#FFC107] p-6 shadow-xl relative overflow-hidden group hover:border-gray-700 transition-colors">
-                        <div className="flex items-center justify-between z-10 relative">
-                            <span className="text-xs uppercase tracking-widest font-semibold text-gray-400">Pending Claims</span>
-                            <div className="bg-[#FFC107]/10 p-2 rounded-lg">
-                                <FileText size={20} className="text-[#FFC107]" />
-                            </div>
-                        </div>
-                        <div className="mt-4 text-4xl font-bold text-white z-10 relative">8</div>
-                        <span className="text-xs text-gray-500 z-10 relative block mt-2">REQUIRES APPROVAL</span>
+                    <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Pending Claims</span>
+                        <div className="text-4xl font-bold text-white leading-none">8</div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-red-500">Requires Approval</span>
                     </div>
 
-                    <div className="rounded-2xl bg-panel border-gray-700 border-b-4 border-b-[#FFC107] p-6 shadow-xl relative overflow-hidden group hover:border-gray-700 transition-colors">
-                        <div className="flex items-center justify-between z-10 relative">
-                            <span className="text-xs uppercase tracking-widest font-semibold text-gray-400">Payroll Status</span>
-                            <div className="bg-[#FFC107]/10 p-2 rounded-lg">
-                                <DollarSign size={20} className="text-[#FFC107]" />
-                            </div>
-                        </div>
-                        <div className="mt-4 text-2xl font-bold text-white z-10 relative pt-2">PENDING</div>
-                        <span className="text-xs text-gray-500 z-10 relative block mt-2">FOR CURRENT MONTH</span>
+                    <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Payroll Status</span>
+                        <div className="text-xl font-bold text-white leading-none pt-2 uppercase">Pending</div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/60">For Current Month</span>
                     </div>
                 </div>
 
@@ -551,97 +597,245 @@ function DashboardContent() {
     }
 
     // Default / Engineer View
+
+    // Derived stats
+    const activeSiteName = engineerSites.find(s => (s as any)._id === activeSiteId || s.id === activeSiteId)?.name || 'Selected Site';
+    
+    // Attendance chart data
+    const last7Days = Array.from({length: 7}, (_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - (6 - i));
+        return d.toISOString().split('T')[0];
+    });
+
+    const attendanceWeeklyData = last7Days.map(dateStr => {
+        const engCount = dashData.attendance.engineerRecords?.filter((r:any) => {
+            const dateVal = r.date || r.checkInTime || r.createdAt || '';
+            return dateVal.startsWith(dateStr);
+        }).length || 0;
+        const labCount = dashData.attendance.labourRecords?.filter((r:any) => {
+            const dateVal = r.date || r.checkInTime || r.createdAt || '';
+            return dateVal.startsWith(dateStr);
+        }).length || 0;
+        return {
+            date: new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short' }),
+            Engineers: engCount,
+            Labours: labCount
+        };
+    });
+
+    // Materials chart data
+    const approvedMats = dashData.materials;
+    const materialsWeeklyData = last7Days.map(dateStr => {
+        const matsOnDate = approvedMats.filter((m: any) => {
+            const mDate = m.createdAt || m.updatedAt || '';
+            return mDate.startsWith(dateStr);
+        });
+        const qty = matsOnDate.reduce((acc: number, curr: any) => acc + (Number(curr.quantity) || 0), 0);
+        return {
+            date: new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short' }),
+            Quantity: qty
+        };
+    });
+
+    const COLORS_PIE = ['#10B981', '#FFB600', '#EF4444', '#3B82F6'];
+
     return (
-        <div className="space-y-8">
-            <div className="flex flex-col gap-4">
-                <h1 className="text-2xl font-bold text-foreground">Welcome, Engineer</h1>
-                <p className="text-muted">Select a module to begin.</p>
+        <div className="space-y-10 pb-12">
+            {/* Header Section */}
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between border-b border-white/5 pb-8">
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 rounded-2xl bg-white/[0.03] px-4 py-2 border border-white/10 shadow-inner group hover:border-primary/30 transition-all">
+                        <MapPin size={14} className="text-primary" />
+                        <select 
+                            className="bg-transparent border-none text-xs font-bold text-slate-300 focus:outline-none appearance-none pr-6 cursor-pointer uppercase tracking-wider"
+                            value={activeSiteId}
+                            onChange={(e) => setActiveSiteId(e.target.value)}
+                        >
+                            <option value="All" className="bg-panel text-foreground">✓ All Assigned Sites</option>
+                            {engineerSites.map((site: any) => (
+                                <option key={site._id || site.id} value={site._id || site.id} className="bg-panel text-foreground">
+                                    {site.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-                {/* 1. ATTENDANCE MODULE */}
-                <div className="rounded-xl border border-gray-700 bg-panel overflow-hidden flex flex-col hover:border-blue-500/50 transition-colors shadow-lg">
-                    <div className="p-6 bg-gradient-to-br from-panel to-surface border-b border-gray-700">
-                        <div className="h-12 w-12 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 mb-4">
-                            <img width="24" height="24" src="https://img.icons8.com/ios-filled/50/1A1A1A/id-verified.png" alt="id-verified" />
-                        </div>
-                        <h3 className="text-lg font-bold text-foreground">Site Engineer Attendance</h3>
-                        <p className="text-sm text-muted mt-1">Manage logs and hours</p>
-                    </div>
-                    <div className="p-4 flex flex-col gap-2 flex-1 bg-surface/30">
-                        <Link href="/attendance" className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-700 transition-colors group">
-                            <div className="flex items-center gap-3">
-                                <CheckCircle size={16} className="text-green-500" />
-                                <span className="text-sm font-medium text-foreground">Daily Attendance</span>
-                            </div>
-                            <ArrowRight size={14} className="text-muted group-hover:text-foreground" />
-                        </Link>
-                        <Link href="/attendance/monthly" className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-700 transition-colors group">
-                            <div className="flex items-center gap-3">
-                                <Calendar size={16} className="text-blue-500" />
-                                <span className="text-sm font-medium text-foreground">Monthly Report</span>
-                            </div>
-                            <ArrowRight size={14} className="text-muted group-hover:text-foreground" />
-                        </Link>
-                        <Link href="/attendance/timesheet" className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-700 transition-colors group">
-                            <div className="flex items-center gap-3">
-                                <Clock size={16} className="text-orange-500" />
-                                <span className="text-sm font-medium text-foreground">Working Hours Data</span>
-                            </div>
-                            <ArrowRight size={14} className="text-muted group-hover:text-foreground" />
-                        </Link>
-                    </div>
+            {loadingData ? (
+                <div className="flex justify-center items-center h-64">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary"></div>
                 </div>
-
-                {/* 2. MATERIALS MODULE */}
-                <div className="rounded-xl border border-gray-700 bg-panel overflow-hidden flex flex-col hover:border-orange-500/50 transition-colors shadow-lg">
-                    <div className="p-6 bg-gradient-to-br from-panel to-surface border-b border-gray-700">
-                        <div className="h-12 w-12 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500 mb-4">
-                            <img width="24" height="24" src="https://img.icons8.com/quill/100/1A1A1A/portraits.png" alt="portraits" />
+            ) : (
+                <>
+                    {/* Row 1: 4 Stat Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Assigned Sites</span>
+                            <div className="text-4xl font-bold text-white leading-none">{engineerSites.length}</div>
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-success">Active</span>
                         </div>
-                        <h3 className="text-lg font-bold text-foreground">Extra Material Request</h3>
-                        <p className="text-sm text-muted mt-1">Request supplies for Site</p>
-                    </div>
-                    <div className="p-6 flex flex-col gap-4 flex-1 bg-surface/30">
-                        <ul className="space-y-2 text-sm text-muted">
-                            <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-gray-500"></div> Select Site Name</li>
-                            <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-gray-500"></div> Assigned to Project Manager</li>
-                        </ul>
-                        <Link href="/materials/request" className="mt-auto w-full flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 rounded-lg transition-colors">
-                            <img width="18" height="18" src="https://img.icons8.com/quill/100/FFFFFF/portraits.png" alt="portraits" /> Create Request
-                        </Link>
-                    </div>
-                </div>
-
-                {/* 3. LEAVE MODULE */}
-                <div className="rounded-xl border border-gray-700 bg-panel overflow-hidden flex flex-col hover:border-purple-500/50 transition-colors shadow-lg">
-                    <div className="p-6 bg-gradient-to-br from-panel to-surface border-b border-gray-700">
-                        <div className="h-12 w-12 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500 mb-4">
-                            <img width="24" height="24" src="https://img.icons8.com/ios-filled/50/1A1A1A/secured-letter.png" alt="secured-letter" />
+                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Total Materials</span>
+                            <div className="text-4xl font-bold text-white leading-none">{approvedMats.length}</div>
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-400">Recorded Quantity</span>
                         </div>
-                        <h3 className="text-lg font-bold text-foreground">Employee Leave</h3>
-                        <p className="text-sm text-muted mt-1">Apply for leaves</p>
+                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Open Issues</span>
+                            <div className="text-4xl font-bold text-white leading-none">{dashData.issues.filter((i:any) => i.status !== 'Resolved').length}</div>
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-red-400">Requires Attention</span>
+                        </div>
+                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Leave Requests</span>
+                            <div className="text-4xl font-bold text-white leading-none">{(dashData.leaves || []).length}</div>
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-purple-400">{(dashData.leaves || []).filter((l:any) => l.status === 'Pending').length} Pending</span>
+                        </div>
                     </div>
-                    <div className="p-6 flex flex-col gap-4 flex-1 bg-surface/30">
-                        <ul className="space-y-2 text-sm text-muted">
-                            <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-gray-500"></div> Casual & Sick Leave</li>
-                            <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-gray-500"></div> Status Tracking</li>
-                        </ul>
-                        <Link href="/leave" className="mt-auto w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-lg transition-colors">
-                            <img width="18" height="18" src="https://img.icons8.com/ios-filled/50/FFFFFF/secured-letter.png" alt="secured-letter" /> Apply Now
-                        </Link>
-                    </div>
-                </div>
 
-            </div>
+                    {/* Row 2: 50/50 - Engineer Attendance & Approved Materials */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                        {/* Site Engineer Attendance This Week */}
+                        <div className="premium-card p-8 flex flex-col h-[450px]">
+                            <div className="mb-8">
+                                <h3 className="text-xl font-bold text-white font-serif tracking-tight uppercase">Engineer Attendance</h3>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Current Week Analysis</p>
+                            </div>
+                            <div className="flex-1 min-h-0">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={attendanceWeeklyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
+                                        <XAxis dataKey="date" stroke="#ffffff40" tick={{ fill: '#ffffff60', fontSize: 10, fontWeight: 'bold' }} axisLine={false} tickLine={false} dy={10} />
+                                        <YAxis stroke="#ffffff40" tick={{ fill: '#ffffff60', fontSize: 10, fontWeight: 'bold' }} axisLine={false} tickLine={false} dx={-10} allowDecimals={false} />
+                                        <RechartsTooltip 
+                                            cursor={{ fill: '#ffffff05' }}
+                                            contentStyle={{ backgroundColor: '#0B0D11', border: '1px solid #ffffff10', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
+                                            itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                                            labelStyle={{ color: '#ffffff60', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}
+                                        />
+                                        <Legend wrapperStyle={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', paddingTop: '20px' }} iconType="circle" />
+                                        <Bar dataKey="Engineers" fill="#3B82F6" radius={[6, 6, 0, 0]} barSize={28} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* Approved Materials */}
+                        <div className="premium-card p-8 flex flex-col h-[450px]">
+                            <div className="mb-8">
+                                <h3 className="text-xl font-bold text-white font-serif tracking-tight uppercase">Materials Forecast</h3>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">{activeSiteId === 'All' ? 'All Sites' : 'Selected Site'} • Weekly Approved Quantities</p>
+                            </div>
+                            <div className="flex-1 min-h-0">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={materialsWeeklyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
+                                        <XAxis dataKey="date" stroke="#ffffff40" tick={{ fill: '#ffffff60', fontSize: 10, fontWeight: 'bold' }} axisLine={false} tickLine={false} dy={10} />
+                                        <YAxis stroke="#ffffff40" tick={{ fill: '#ffffff60', fontSize: 10, fontWeight: 'bold' }} axisLine={false} tickLine={false} dx={-10} allowDecimals={false} />
+                                        <RechartsTooltip 
+                                            cursor={{ fill: '#ffffff05' }}
+                                            contentStyle={{ backgroundColor: '#0B0D11', border: '1px solid #ffffff10', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
+                                            itemStyle={{ fontSize: '12px', fontWeight: 'bold', color: '#10B981' }}
+                                            labelStyle={{ color: '#ffffff60', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}
+                                        />
+                                        <Bar dataKey="Quantity" name="Total Materials" fill="#10B981" radius={[6, 6, 0, 0]} barSize={28} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Row 3: 50/50 Logs and Quick Actions */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                        {/* Recent Logs (50%) */}
+                        <div className="premium-card p-8 flex flex-col h-[400px]">
+                            <div className="mb-6 flex items-center gap-3 shrink-0">
+                                <Activity size={18} className="text-blue-500" />
+                                <h4 className="text-xs font-bold text-white uppercase tracking-[0.2em]">Recent Activity Logs</h4>
+                            </div>
+                            <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar pr-2">
+                                {[
+                                    ...dashData.materials.map((m: any) => ({ _id: m._id, type: 'Material', icon: <Package size={14} className="text-blue-400"/>, title: m.item, detail: `Qty: ${m.quantity} ${m.unit} • Status: ${m.status}`, date: m.createdAt || m.updatedAt || new Date().toISOString(), status: m.status })),
+                                    ...dashData.issues.map((i: any) => ({ _id: i._id, type: 'Issue', icon: <AlertTriangle size={14} className={i.priority === 'Critical' ? 'text-red-500' : 'text-[#FFB600]'}/>, title: i.title, detail: `Priority: ${i.priority} • Status: ${i.status}`, date: i.createdAt || i.updatedAt || new Date().toISOString(), status: i.status })),
+                                    ...dashData.pettyCash.map((p: any) => ({ _id: p._id, type: 'Petty Cash', icon: <DollarSign size={14} className={p.type === 'Expense' ? 'text-red-400' : 'text-green-400'}/>, title: p.title, detail: `Amount: ₹${p.amount} • Type: ${p.type}`, date: p.date || p.createdAt || new Date().toISOString(), status: p.type })),
+                                    ...(dashData.leaves || []).map((l: any) => ({ _id: l._id, type: 'Leave', icon: <Calendar size={14} className="text-purple-400"/>, title: `${l.type || 'Leave'} Request`, detail: `${l.employeeName || 'You'} • ${new Date(l.from).toLocaleDateString()} to ${new Date(l.to).toLocaleDateString()}`, date: l.createdAt || new Date().toISOString(), status: l.status })),
+                                    ...(dashData.attendance?.engineerRecords || []).slice(0, 5).map((a: any) => ({ _id: a._id, type: 'Attendance', icon: <CheckCircle size={14} className="text-green-400"/>, title: `Attendance Logged`, detail: `${a.employeeName || 'Engineer'} • ${a.site || 'Site'} • ${a.totalHours ? a.totalHours.toFixed(1) + 'h' : 'Active'}`, date: a.checkInTime || a.createdAt || new Date().toISOString(), status: a.approvalStatus === 'approved' ? 'Approved' : a.approvalStatus === 'rejected' ? 'Rejected' : 'Pending' }))
+                                ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5).map((log: any, index: number) => (
+                                    <div key={`${log.type}-${log._id}-${index}`} className="flex items-center gap-4 p-4 bg-white/[0.02] border border-white/5 rounded-xl hover:border-primary/20 transition-colors">
+                                        <div className="p-2 bg-white/[0.05] rounded-lg shrink-0">
+                                            {log.icon}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex justify-between items-start gap-2">
+                                                <h5 className="text-[12px] font-bold text-white uppercase tracking-wider truncate">{log.title}</h5>
+                                                <span className="text-[9px] text-slate-500 shrink-0">{new Date(log.date).toLocaleDateString()}</span>
+                                            </div>
+                                            <p className="text-[10px] text-slate-400 mt-1 truncate">{log.detail}</p>
+                                        </div>
+                                        <div className="shrink-0 flex justify-end">
+                                            {log.status === 'Approved' || log.status === 'Resolved' || log.status === 'Income' ? (
+                                                <span className="text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-green-500/20 text-green-500">{log.status}</span>
+                                            ) : log.status === 'Pending' || log.status === 'Open' || log.status === 'In Progress' ? (
+                                                <span className="text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-[#FFB600]/20 text-[#FFB600]">{log.status}</span>
+                                            ) : log.status === 'Expense' ? (
+                                                <span className="text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-red-500/20 text-red-500">{log.status}</span>
+                                            ) : log.status === 'Critical' || log.status === 'Rejected' ? (
+                                                <span className="text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-red-500/20 text-red-500">{log.status}</span>
+                                            ) : (
+                                                <span className="text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-slate-500/20 text-slate-400">{log.status}</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                                {dashData.materials.length === 0 && dashData.issues.length === 0 && dashData.pettyCash.length === 0 && (dashData.leaves || []).length === 0 && (
+                                    <div className="text-center text-slate-500 text-[10px] uppercase tracking-widest mt-10">No recent activity logs found</div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Quick Actions (50%) */}
+                        <div className="premium-card p-8 flex flex-col h-[400px]">
+                            <div className="mb-6 flex items-center gap-3 shrink-0">
+                                <Activity size={18} className="text-blue-500" />
+                                <h4 className="text-xs font-bold text-white uppercase tracking-[0.2em]">Quick Actions</h4>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
+                                <Link href="/attendance" className="flex flex-col items-center justify-center gap-3 p-5 bg-white/[0.02] border border-white/5 rounded-xl hover:bg-primary/10 hover:border-primary/30 transition-all group">
+                                    <div className="p-3 bg-white/[0.05] rounded-xl group-hover:bg-primary/20 transition-colors">
+                                        <Users size={20} className="text-slate-400 group-hover:text-primary transition-colors" />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest text-center">Log Attendance</span>
+                                </Link>
+                                <Link href="/leave" className="flex flex-col items-center justify-center gap-3 p-5 bg-white/[0.02] border border-white/5 rounded-xl hover:bg-purple-500/10 hover:border-purple-500/30 transition-all group">
+                                    <div className="p-3 bg-white/[0.05] rounded-xl group-hover:bg-purple-500/20 transition-colors">
+                                        <Calendar size={20} className="text-slate-400 group-hover:text-purple-500 transition-colors" />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest text-center">Leave Requests</span>
+                                </Link>
+                                <Link href="/sites" className="flex flex-col items-center justify-center gap-3 p-5 bg-white/[0.02] border border-white/5 rounded-xl hover:bg-blue-500/10 hover:border-blue-500/30 transition-all group">
+                                    <div className="p-3 bg-white/[0.05] rounded-xl group-hover:bg-blue-500/20 transition-colors">
+                                        <Building size={20} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest text-center">My Sites</span>
+                                </Link>
+                                <Link href={`/sites/${activeSiteId !== 'All' ? activeSiteId : (engineerSites[0]?._id || engineerSites[0]?.id || '')}?tab=Issues`} className="flex flex-col items-center justify-center gap-3 p-5 bg-white/[0.02] border border-white/5 rounded-xl hover:bg-red-500/10 hover:border-red-500/30 transition-all group">
+                                    <div className="p-3 bg-white/[0.05] rounded-xl group-hover:bg-red-500/20 transition-colors">
+                                        <AlertTriangle size={20} className="text-slate-400 group-hover:text-red-500 transition-colors" />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest text-center">Report Issue</span>
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 }
 
 export default function Home() {
     return (
-        <Suspense fallback={<div className="flex h-screen items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div></div>}>
+        <Suspense fallback={<div className="flex h-screen items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div></div>}>
             <DashboardContent />
         </Suspense>
     );

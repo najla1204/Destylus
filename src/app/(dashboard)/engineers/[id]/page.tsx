@@ -48,7 +48,6 @@ interface PettyCashSummary {
 interface LeaveRequest {
     id: number;
     name: string;
-    role: string;
     type: string;
     from: string;
     to: string;

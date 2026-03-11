@@ -65,3 +65,31 @@ export async function PATCH(
     );
   }
 }
+
+// DELETE /api/attendance/[id] - Delete attendance record
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const deletedAttendance = await Attendance.findByIdAndDelete(id);
+
+    if (!deletedAttendance) {
+      return NextResponse.json(
+        { error: 'Attendance record not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      message: 'Attendance record deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting attendance:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete attendance record' },
+      { status: 500 }
+    );
+  }
+}

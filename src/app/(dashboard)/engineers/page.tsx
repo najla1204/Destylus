@@ -43,6 +43,7 @@ export default function EngineersPage() {
 
     // Engineeers State
     const [engineersList, setEngineersList] = useState<Engineer[]>(INITIAL_ENGINEERS);
+    const [filterSite, setFilterSite] = useState("");
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [newEngineer, setNewEngineer] = useState({ name: "", email: "", site: "" });
     const [siteSearchQuery, setSiteSearchQuery] = useState("");
@@ -250,108 +251,70 @@ export default function EngineersPage() {
         return [];
     };
 
-    const engineers = getVisibleEngineers().filter(eng =>
-        eng.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        eng.role.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const engineers = getVisibleEngineers().filter(eng => {
+        const matchesSearch = eng.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                              eng.role.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesSite = !filterSite || eng.site === filterSite;
+        return matchesSearch && matchesSite;
+    });
+
+    const isEngineerRole = userRole === "Engineer" || userRole === "Site Engineer" || userRole === "engineer" || userRole === "site_engineer";
+
+    if (isLoading && !userRole) {
+        return (
+            <div className="flex h-64 items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+            </div>
+        );
+    }
+
+    if (isEngineerRole) {
+        return (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="h-20 w-20 bg-red-500/10 rounded-full flex items-center justify-center text-red-500 mb-6 font-bold text-3xl">
+                    !
+                </div>
+                <h1 className="text-2xl font-bold text-foreground">Access Denied</h1>
+                <p className="text-muted mt-2 max-w-md">
+                    You do not have permission to view the Engineers directory. Please contact your administrator if you believe this is an error.
+                </p>
+                <div className="mt-8">
+                    <Link href="/dashboard" className="px-6 py-2 bg-primary text-black font-bold rounded-lg hover:bg-primary/90 transition-colors">Return to Dashboard</Link>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
 
-            {/* Filters */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-700 pb-4">
-                <div className="relative flex-1 min-w-[200px] max-w-sm">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={16} />
-                    <input
-                        type="text"
-                        placeholder="Search engineers..."
-                        className="w-full rounded-lg border border-gray-700 bg-surface pl-10 pr-4 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                </div>
-                
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center rounded-lg border border-gray-700 bg-surface p-1">
-                        <button
-                            onClick={() => setViewMode("grid")}
-                            className={`rounded-md p-1.5 transition-colors ${viewMode === "grid" ? "bg-primary text-primary-foreground" : "text-muted hover:text-foreground"}`}
-                            title="Grid View"
-                        >
-                            <LayoutGrid size={16} />
-                        </button>
-                        <button
-                            onClick={() => setViewMode("list")}
-                            className={`rounded-md p-1.5 transition-colors ${viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted hover:text-foreground"}`}
-                            title="List/Table View"
-                        >
-                            <List size={16} />
-                        </button>
-                    </div>
-
-                    {userRole === "HR Manager" && (
-                        <button className="flex items-center gap-2 rounded-lg border border-gray-700 bg-surface px-3 py-2 text-sm font-medium text-foreground hover:bg-gray-700">
-                            <Filter size={16} />
-                            Filter
-                        </button>
-                    )}
-                    <button 
-                        onClick={() => setIsAddModalOpen(true)}
-                        className="flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                    >
-                        <Plus size={16} />
-                        Add Engineer
-                    </button>
-                </div>
-            </div>
-
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="rounded-xl border border-gray-700 bg-panel p-5 shadow-sm">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted">Total Engineers</span>
-                        <div className="rounded-lg bg-primary/10 p-2">
-                            <User size={18} className="text-primary" />
-                        </div>
-                    </div>
-                    <div className="mt-2 text-3xl font-bold text-foreground">{engineersList.length}</div>
-                    <span className="text-xs text-muted">Registered engineers</span>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-2">
+                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Total Engineers</span>
+                    <div className="text-4xl font-bold text-white leading-none">{engineersList.length}</div>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-primary">Registered engineers</span>
                 </div>
-                <div className="rounded-xl border border-gray-700 bg-panel p-5 shadow-sm">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted">Active Engineers</span>
-                        <div className="rounded-lg bg-green-500/10 p-2">
-                            <CheckCircle size={18} className="text-green-400" />
-                        </div>
-                    </div>
-                    <div className="mt-2 text-3xl font-bold text-foreground">{engineersList.filter(e => e.status === "Active").length}</div>
-                    <span className="text-xs text-green-400">Currently active</span>
+                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Active Engineers</span>
+                    <div className="text-4xl font-bold text-white leading-none">{engineersList.filter(e => e.status === "Active").length}</div>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-green-500">Currently active</span>
                 </div>
-                <div className="rounded-xl border border-gray-700 bg-panel p-5 shadow-sm">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted">Sites Covered</span>
-                        <div className="rounded-lg bg-blue-500/10 p-2">
-                            <MapPin size={18} className="text-blue-400" />
-                        </div>
-                    </div>
-                    <div className="mt-2 text-3xl font-bold text-foreground">{new Set(engineersList.map(e => e.site).filter(s => s && s !== "Unassigned")).size}</div>
-                    <span className="text-xs text-muted">Unique sites with engineers</span>
+                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Sites Covered</span>
+                    <div className="text-4xl font-bold text-white leading-none">{new Set(engineersList.map(e => e.site).filter(s => s && s !== "Unassigned")).size}</div>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-500">Unique sites</span>
                 </div>
-                <div className="rounded-xl border border-gray-700 bg-panel p-5 shadow-sm">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted">Unassigned</span>
-                        <div className="rounded-lg bg-yellow-500/10 p-2">
-                            <Clock size={18} className="text-yellow-400" />
-                        </div>
-                    </div>
-                    <div className="mt-2 text-3xl font-bold text-foreground">{engineersList.filter(e => !e.site || e.site === "Unassigned").length}</div>
-                    <span className="text-xs text-yellow-400">Awaiting site assignment</span>
+                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Unassigned</span>
+                    <div className="text-4xl font-bold text-white leading-none">{engineersList.filter(e => !e.site || e.site === "Unassigned").length}</div>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-yellow-500">Awaiting assignment</span>
                 </div>
             </div>
 
             {/* Attendance Approval Section (PM Only) */}
             {userRole === "Project Manager" && (
-                <div className="mb-8 rounded-xl border border-gray-700 bg-panel p-6 shadow-sm">
+                <div className="mb-4 mt-6 rounded-xl border border-gray-700 bg-panel p-6 shadow-sm">
                     <h2 className="mb-4 text-xl font-bold text-foreground flex items-center gap-2">
                         <Clock className="text-primary" size={24} />
                         Attendance Approvals
@@ -432,6 +395,65 @@ export default function EngineersPage() {
                     )}
                 </div>
             )}
+
+            {/* Filters */}
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between border-b border-gray-700 pb-4 mt-6 mb-4">
+                <h2 className="text-lg font-bold text-foreground uppercase tracking-wider hidden xl:block">ENGINEERS ({engineersList.length})</h2>
+                <div className="flex items-center gap-3 w-full xl:w-auto">
+                    <div className="relative flex-1 min-w-[150px] max-w-sm mr-auto xl:mr-0">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Search engineers..."
+                            className="w-full rounded-lg border border-gray-700 bg-surface pl-10 pr-4 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                
+                    <div className="flex items-center rounded-lg border border-gray-700 bg-surface p-1">
+                        <button
+                            onClick={() => setViewMode("grid")}
+                            className={`rounded-md p-1.5 transition-colors ${viewMode === "grid" ? "bg-primary text-black font-semibold" : "text-muted hover:text-foreground"}`}
+                            title="Grid View"
+                        >
+                            <LayoutGrid size={16} />
+                        </button>
+                        <button
+                            onClick={() => setViewMode("list")}
+                            className={`rounded-md p-1.5 transition-colors ${viewMode === "list" ? "bg-primary text-black font-semibold" : "text-muted hover:text-foreground"}`}
+                            title="List/Table View"
+                        >
+                            <List size={16} />
+                        </button>
+                    </div>
+
+                    {userRole === "HR Manager" && (
+                        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
+                            <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted pr-1">
+                                <Filter size={14} />
+                            </div>
+                            <select
+                                value={filterSite}
+                                onChange={(e) => setFilterSite(e.target.value)}
+                                className="rounded-lg border border-gray-700 bg-surface px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none appearance-none cursor-pointer flex-1 sm:flex-none max-w-[150px] truncate"
+                            >
+                                <option value="">All Sites</option>
+                                {sites.map((site) => (
+                                    <option key={site._id} value={site.name}>{site.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                    <button 
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-black hover:bg-primary-hover shadow-sm whitespace-nowrap ml-auto sm:ml-0"
+                    >
+                        <Plus size={16} />
+                        <span className="hidden sm:inline">Add Engineer</span>
+                    </button>
+                </div>
+            </div>
 
             {/* Views */}
             {viewMode === "grid" ? (

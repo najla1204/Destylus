@@ -53,6 +53,17 @@ export default function LoginPage() {
       // Store user data in localStorage (in production, use secure cookies)
       localStorage.setItem('user', JSON.stringify(data.user));
 
+      // Map API role to display role for the Sidebar
+      const roleMap: Record<string, string> = {
+        'project_manager': 'Project Manager',
+        'engineer': 'Site Engineer',
+        'hr': 'HR Manager',
+        'admin': 'Admin',
+      };
+      localStorage.setItem('userName', data.user.name || '');
+      localStorage.setItem('userRole', roleMap[data.user.role] || data.user.role);
+      localStorage.setItem('employeeId', data.user.employeeId || '');
+
       setMessage('Login successful! Redirecting...');
       setMessageType('success');
 
@@ -60,13 +71,13 @@ export default function LoginPage() {
       setTimeout(() => {
         switch (data.user.role) {
           case 'project_manager':
-            router.push('/pm');
+            router.push('/dashboard');
             break;
           case 'engineer':
-            router.push('/engineer/attendance');
+            router.push('/dashboard');
             break;
           case 'hr':
-            router.push('/hr/reports');
+            router.push('/dashboard');
             break;
           default:
             router.push('/dashboard');
@@ -85,7 +96,7 @@ export default function LoginPage() {
     <div 
       className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
       style={{
-        backgroundImage: `url('https://images.unsplash.com/photo-1541888087405-eb81f84d6b67?q=80&w=2671&auto=format&fit=crop')`,
+        backgroundImage: `url('/bg.png')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
@@ -96,14 +107,14 @@ export default function LoginPage() {
       <div className="max-w-md w-full space-y-8 relative z-10 bg-zinc-900/60 p-8 sm:p-10 rounded-[2rem] shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] border border-white/10 backdrop-blur-md">
         <div>
           {/* Logo / Brand Accent */}
-          <div className="mx-auto h-16 w-16 bg-[#ffb600] rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(255,182,0,0.25)]">
-            <Building2 className="h-8 w-8 text-black" strokeWidth={2.5} />
+          <div className="mx-auto h-20 w-20 bg-[#ffb600] rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(255,182,0,0.25)] p-3">
+            <img src="/logo.png" alt="Destylus Logo" className="h-full w-full object-contain" />
           </div>
-          <h2 className="mt-8 text-center text-3xl font-extrabold text-white tracking-tight">
-            Centralized Access
+          <h2 className="mt-8 text-center text-3xl font-black text-white tracking-[0.2em] uppercase">
+            Destylus Civil
           </h2>
           <p className="mt-2 text-center text-sm text-zinc-400">
-            Sign in to manage construction progress
+            Enterprise Resource Planning
           </p>
         </div>
 
