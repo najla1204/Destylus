@@ -109,11 +109,11 @@ export default function PettyCashPage() {
             {/* Dashboard Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Balance Card */}
-                <div className="bg-panel border border-gray-700 p-6 rounded-xl flex items-center justify-between col-span-1 md:col-span-1 relative overflow-hidden group">
+                <div className="bg-panel border border-gray-200 dark:border-gray-700 p-6 rounded-xl flex items-center justify-between col-span-1 md:col-span-1 relative overflow-hidden group">
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
                     <div>
                         <p className="text-sm font-medium text-muted mb-1">Current Balance</p>
-                        <p className="text-4xl font-bold text-foreground font-mono tracking-tight">
+                        <p className="text-4xl font-bold text-foreground dark:text-white font-mono tracking-tight">
                             ₹{currentBalance.toLocaleString()}
                         </p>
                     </div>

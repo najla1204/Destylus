@@ -179,6 +179,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
             <div className="flex items-center gap-4">
                 <button 
                     onClick={onMenuClick}
+                    suppressHydrationWarning
                     className="lg:hidden flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 dark:text-slate-400 hover:bg-black/[0.05] dark:hover:bg-white/[0.05] hover:text-foreground transition-all border border-black/5 dark:border-white/5"
                 >
                     <Menu size={20} />
@@ -215,7 +216,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
                     >
                         <Bell size={20} />
                         {notifications.length > 0 && (
-                            <span className="absolute -right-1 -top-1 h-5 min-w-[20px] px-1.5 flex items-center justify-center rounded-full border-2 border-background bg-error text-[10px] font-bold text-white shadow-lg">
+                            <span className="absolute -right-1 -top-1 h-5 min-w-[20px] px-1.5 flex items-center justify-center rounded-full border-2 border-background bg-zinc-200 text-zinc-950 text-[10px] font-bold shadow-lg">
                                 {notifications.length}
                             </span>
                         )}
@@ -226,7 +227,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
                             <div className="flex items-center justify-between border-b border-gray-700 p-4 bg-surface/50">
                                 <h3 className="text-sm font-bold text-foreground">Notifications</h3>
                                 {notifications.length > 0 && (
-                                    <span className="rounded-full bg-error/10 px-2 py-0.5 text-[10px] font-bold text-error">
+                                    <span className="rounded-full bg-zinc-200 text-zinc-950 px-2 py-0.5 text-[10px] font-bold">
                                         {notifications.length} New
                                     </span>
                                 )}

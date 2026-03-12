@@ -80,17 +80,21 @@ export default function LoginPage() {
       <div className="absolute inset-0 bg-zinc-950/85 backdrop-blur-sm z-0"></div>
 
       <div className="w-full max-w-md space-y-8 relative z-10 bg-zinc-900/60 p-8 sm:p-10 rounded-[2rem] shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] border border-white/10 backdrop-blur-md">
-        <div>
-          {/* Logo / Brand Accent */}
-          <div className="mx-auto h-16 w-16 bg-[#ffb600] rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(255,182,0,0.25)]">
-            <Building2 className="h-8 w-8 text-black" strokeWidth={2.5} />
+        <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/5">
+          {/* Logo on Left */}
+          <div className="flex-shrink-0">
+            <img src="/logo.png" alt="Destylus Logo" className="h-16 sm:h-20 w-auto object-contain shadow-2xl" />
           </div>
-          <h1 className="mt-8 text-center text-3xl font-extrabold text-white tracking-tight">
-            Destylus Civil
-          </h1>
-          <p className="mt-2 text-center text-sm text-zinc-400">
-            Enterprise Resource Planning
-          </p>
+          
+          {/* Name on Right */}
+          <div className="flex flex-col items-end text-right">
+            <h1 className="text-xl sm:text-2xl font-black text-white tracking-[0.2em] uppercase">
+              Destylus Civil
+            </h1>
+            <p className="mt-1 text-[10px] sm:text-xs text-[#ffb600] tracking-[0.2em] uppercase font-bold">
+              ERP Portal
+            </p>
+          </div>
         </div>
 
         <div className="pt-2">

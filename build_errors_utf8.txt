@@ -1,0 +1,76 @@
+﻿
+> construction-erp@0.1.0 build
+> next build
+
+Γû▓ Next.js 16.1.1 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 7.5s
+  Running TypeScript ...
+node.exe : Failed to 
+compile.
+At C:\Program Files\nod
+ejs\npm.ps1:29 char:3
++   & $NODE_EXE 
+$NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (Failed to com   
+ pile.:String) [],     
+RemoteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+
+./src/models/User.ts:29
+:44
+Type error: This 
+expression is not 
+callable.
+  Type 'SaveOptions' 
+has no call signatures.
+
+[0m [90m 27 |[39m 
+[90m// Hash password 
+before saving[39m
+ [90m 28 |[39m userSc
+hema[33m.[39mpre([32
+m'save'[39m[33m,[39m
+ [36masync[39m 
+[36mfunction[39m 
+(next) {
+[31m[1m>[22m[39m[9
+0m 29 |[39m   
+[36mif[39m ([33m![3
+9m[36mthis[39m[33m.
+[39misModified([32m'pa
+ssword'[39m)) 
+[36mreturn[39m 
+next()[33m;[39m
+ [90m    |[39m       
+                       
+              
+[31m[1m^[22m[39m
+ [90m 30 |[39m   
+[36mtry[39m {
+ [90m 31 |[39m     
+[36mconst[39m salt 
+[33m=[39m 
+[36mawait[39m bcrypt
+[33m.[39mgenSalt([35m
+10[39m)[33m;[39m
+ [90m 32 |[39m     [
+36mthis[39m[33m.[39m
+password [33m=[39m 
+[36mawait[39m bcrypt
+[33m.[39mhash([36mthi
+s[39m[33m.[39mpasswo
+rd[33m,[39m 
+salt)[33m;[39m[0m
+Next.js build worker 
+exited with code: 1 
+and signal: null

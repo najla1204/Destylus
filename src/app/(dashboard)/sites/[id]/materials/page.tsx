@@ -167,17 +167,17 @@ export default function MaterialsPage() {
             <div className="bg-panel border border-gray-700 rounded-xl overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
-                        <thead className="bg-surface text-muted uppercase tracking-wider">
+                        <thead className="bg-surface border-b border-gray-700">
                             <tr>
-                                <th className="p-4 font-semibold">Material Name</th>
-                                <th className="p-4 font-semibold">Category</th>
-                                <th className="p-4 font-semibold text-center">Total In</th>
-                                <th className="p-4 font-semibold text-center">Total Out</th>
-                                <th className="p-4 font-semibold text-center">Current Stock</th>
-                                <th className="p-4 font-semibold text-right">Unit Price</th>
-                                <th className="p-4 font-semibold text-right">Total Value</th>
-                                <th className="p-4 font-semibold text-center">Status</th>
-                                <th className="p-4"></th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Material Name</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Category</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-center">Total In</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-center">Total Out</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-center">Current Stock</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-right">Unit Price</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-right">Total Value</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-center">Status</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest"></th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-700">

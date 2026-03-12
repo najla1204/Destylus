@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Search, Filter, Phone, Mail, MapPin, User, ChevronRight, Briefcase, Clock, CheckCircle, XCircle, Trash2, Plus, LayoutGrid, List } from "lucide-react";
+import { Search, Filter, Phone, Mail, MapPin, User, ChevronRight, Briefcase, Clock, CheckCircle, XCircle, Trash2, Plus, LayoutGrid, List, Camera, X, ArrowLeft, Maximize2, ArrowUpRight, ArrowDownRight } from "lucide-react";
 
 interface AttendanceLog {
     _id: string;
@@ -49,7 +49,11 @@ export default function EngineersPage() {
     const [siteSearchQuery, setSiteSearchQuery] = useState("");
     const [isSiteDropdownOpen, setIsSiteDropdownOpen] = useState(false);
     const [sites, setSites] = useState<SiteData[]>([]);
-
+    
+    // Photo Viewer States
+    const [photoViewerOpen, setPhotoViewerOpen] = useState(false);
+    const [currentViewerPhotos, setCurrentViewerPhotos] = useState<{url: string, title: string, time: string, location: string, id: string, type: string}[]>([]);
+    const [currentViewerIndex, setCurrentViewerIndex] = useState(0);
     const handleDeleteEngineer = async (e: React.MouseEvent, id: string) => {
         e.preventDefault();
         if (confirm("Are you sure you want to delete this engineer?")) {
@@ -125,6 +129,36 @@ export default function EngineersPage() {
     const [teamAttendance, setTeamAttendance] = useState<any[]>([]);
     const [loadingAttendance, setLoadingAttendance] = useState(false);
 
+    const openPhotoViewerFromRecord = (record: AttendanceLog, type: 'in' | 'out') => {
+        const photos: {url: string, title: string, time: string, location: string, id: string, type: string}[] = [];
+        
+        if (record.inTimePhoto) {
+            photos.push({ 
+                url: record.inTimePhoto, 
+                title: `${record.employeeName} - Check In`, 
+                time: new Date(record.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                location: 'Geolocation Recorded',
+                id: record._id, 
+                type: 'in' 
+            });
+        }
+        if (record.outTimePhoto && record.checkOutTime) {
+            photos.push({ 
+                url: record.outTimePhoto, 
+                title: `${record.employeeName} - Check Out`, 
+                time: new Date(record.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                location: 'Geolocation Recorded',
+                id: record._id, 
+                type: 'out' 
+            });
+        }
+        
+        setCurrentViewerPhotos(photos);
+        const index = photos.findIndex(p => p.type === type);
+        setCurrentViewerIndex(index !== -1 ? index : 0);
+        setPhotoViewerOpen(true);
+    };
+
     useEffect(() => {
         const role = localStorage.getItem("userRole") || "Engineer";
         if (role !== userRole) {
@@ -143,6 +177,8 @@ export default function EngineersPage() {
             }
         };
         fetchSites();
+
+
         // Fetch Engineers
         const fetchEngineers = async () => {
             try {
@@ -290,24 +326,24 @@ export default function EngineersPage() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-2">
-                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Total Engineers</span>
-                    <div className="text-4xl font-bold text-white leading-none">{engineersList.length}</div>
+                    <div className="text-4xl font-bold text-foreground leading-none">{engineersList.length}</div>
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-primary">Registered engineers</span>
                 </div>
-                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Active Engineers</span>
-                    <div className="text-4xl font-bold text-white leading-none">{engineersList.filter(e => e.status === "Active").length}</div>
+                    <div className="text-4xl font-bold text-foreground leading-none">{engineersList.filter(e => e.status === "Active").length}</div>
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-green-500">Currently active</span>
                 </div>
-                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Sites Covered</span>
-                    <div className="text-4xl font-bold text-white leading-none">{new Set(engineersList.map(e => e.site).filter(s => s && s !== "Unassigned")).size}</div>
+                    <div className="text-4xl font-bold text-foreground leading-none">{new Set(engineersList.map(e => e.site).filter(s => s && s !== "Unassigned")).size}</div>
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-500">Unique sites</span>
                 </div>
-                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Unassigned</span>
-                    <div className="text-4xl font-bold text-white leading-none">{engineersList.filter(e => !e.site || e.site === "Unassigned").length}</div>
+                    <div className="text-4xl font-bold text-foreground leading-none">{engineersList.filter(e => !e.site || e.site === "Unassigned").length}</div>
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-yellow-500">Awaiting assignment</span>
                 </div>
             </div>
@@ -329,63 +365,93 @@ export default function EngineersPage() {
                     ) : (
                         <div className="overflow-x-auto rounded-lg border border-gray-700">
                             <table className="w-full text-left text-sm">
-                                <thead className="bg-surface text-muted">
+                                <thead className="bg-surface border-b border-gray-700">
                                     <tr>
-                                        <th className="px-4 py-3">Engineer</th>
-                                        <th className="px-4 py-3">Site</th>
-                                        <th className="px-4 py-3">Time</th>
-                                        <th className="px-4 py-3">Geotag</th>
-                                        <th className="px-4 py-3">Status</th>
-                                        <th className="px-4 py-3 text-right">Action</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Name</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Site</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Date</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Check-In</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Check-Out</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Hours</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Status</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-700">
                                     {teamAttendance.map((log) => (
-                                        <tr key={log._id}>
+                                        <tr key={log._id} className="hover:bg-surface/50 transition-colors">
                                             <td className="px-4 py-3 font-medium text-foreground">{log.employeeName}</td>
                                             <td className="px-4 py-3 text-muted">{log.site}</td>
+                                            <td className="px-4 py-3 text-muted">{new Date(log.checkInTime).toLocaleDateString()}</td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center gap-2">
+                                                    {log.inTimePhoto && (
+                                                        <button 
+                                                            onClick={() => openPhotoViewerFromRecord(log, 'in')}
+                                                            className="relative group shrink-0"
+                                                        >
+                                                            <img src={log.inTimePhoto} alt="Check-In" className="w-8 h-8 rounded-full border border-primary/50 object-cover" />
+                                                            <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <Camera size={12} className="text-white" />
+                                                            </div>
+                                                        </button>
+                                                    )}
+                                                    <span className="flex items-center gap-1 text-primary">
+                                                        <Clock size={13} />
+                                                        {new Date(log.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                </div>
+                                            </td>
                                             <td className="px-4 py-3 text-muted">
-                                                {new Date(log.checkInTime).toLocaleTimeString()}
-                                                {log.checkOutTime && ` - ${new Date(log.checkOutTime).toLocaleTimeString()}`}
+                                                {log.checkOutTime ? (
+                                                    <div className="flex items-center gap-2">
+                                                        {log.outTimePhoto && (
+                                                            <button 
+                                                                onClick={() => openPhotoViewerFromRecord(log, 'out')}
+                                                                className="relative group shrink-0"
+                                                            >
+                                                                <img src={log.outTimePhoto} alt="Check-Out" className="w-8 h-8 rounded-full border border-gray-500 object-cover" />
+                                                                <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    <Camera size={12} className="text-white" />
+                                                                </div>
+                                                            </button>
+                                                        )}
+                                                       <span className="flex items-center gap-1">
+                                                            <Clock size={13} />
+                                                            {new Date(log.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-blue-400 font-bold tracking-widest uppercase text-[10px]">ACTIVE</span>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3 font-mono font-medium text-foreground">
+                                                {log.totalHours ? `${log.totalHours.toFixed(1)}h` : '—'}
                                             </td>
                                             <td className="px-4 py-3">
-                                                {log.inTimePhoto ? (
-                                                    <a href={log.inTimePhoto} target="_blank" rel="noreferrer" className="text-primary hover:underline flex items-center gap-1">
-                                                        <MapPin size={14} /> View
-                                                    </a>
-                                                ) : <span className="text-muted">-</span>}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <span className={`px-2 py-1 rounded-full text-xs font-bold ${log.approvalStatus === 'approved' ? 'bg-[#d1fae5] text-black' :
-                                                        log.approvalStatus === 'rejected' ? 'bg-[#fee2e2] text-black' :
-                                                            'bg-[#fef3c7] text-black'
-                                                    }`}>
-                                                    {log.approvalStatus === 'approved' ? 'Approved' :
-                                                        log.approvalStatus === 'rejected' ? 'Rejected' : 'Pending'}
+                                                <span className="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950">
+                                                    {log.approvalStatus.charAt(0).toUpperCase() + log.approvalStatus.slice(1)}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3 text-right">
-                                                {log.approvalStatus === 'pending' ? (
-                                                    <div className="flex justify-end gap-2">
-                                                        <button
-                                                            onClick={() => handleApproveAttendance(log._id)}
-                                                            className="p-1 rounded bg-success/20 text-success hover:bg-success/30 transition-colors" title="Approve"
-                                                        >
-                                                            <CheckCircle size={18} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleRejectAttendance(log._id)}
-                                                            className="p-1 rounded bg-red-500/20 text-red-500 hover:bg-red-500/30 transition-colors" title="Reject"
-                                                        >
-                                                            <XCircle size={18} />
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <span className={`text-sm font-bold ${log.approvalStatus === 'approved' ? 'text-success' : 'text-red-500'
-                                                        }`}>
-                                                        {log.approvalStatus === 'approved' ? 'Approved' : 'Rejected'}
-                                                    </span>
-                                                )}
+                                                <div className="flex justify-end gap-2">
+                                                    {log.approvalStatus === 'pending' && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => handleApproveAttendance(log._id)}
+                                                                className="p-1.5 hover:bg-green-500/10 rounded-lg text-green-400 transition-colors" title="Approve"
+                                                            >
+                                                                <CheckCircle size={16} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleRejectAttendance(log._id)}
+                                                                className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-400 transition-colors" title="Reject"
+                                                            >
+                                                                <XCircle size={16} />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -509,10 +575,7 @@ export default function EngineersPage() {
                                 </div>
 
                                 <div className="mt-4 flex items-center justify-between border-t border-gray-700 pt-4">
-                                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${eng.attendance === 'Present' ? 'bg-success/10 text-success border-success/20' :
-                                        eng.attendance === 'Absent' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
-                                            'bg-gray-700 text-muted border-gray-600'
-                                        }`}>
+                                    <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950`}>
                                         {eng.attendance}
                                     </span>
 
@@ -535,14 +598,14 @@ export default function EngineersPage() {
                     <table className="w-full text-left text-sm">
                         <thead className="bg-surface text-muted border-b border-gray-700">
                             <tr>
-                                <th className="px-4 py-3 font-semibold uppercase tracking-wider">Engineer Name</th>
-                                <th className="px-4 py-3 font-semibold uppercase tracking-wider">Role & Site</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Engineer Name</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Role & Site</th>
                                 {userRole === "HR Manager" && (
-                                    <th className="px-4 py-3 font-semibold uppercase tracking-wider">Reports To</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Reports To</th>
                                 )}
-                                <th className="px-4 py-3 font-semibold uppercase tracking-wider text-center">Attendance</th>
-                                <th className="px-4 py-3 font-semibold uppercase tracking-wider text-center">Status</th>
-                                <th className="px-4 py-3 font-semibold uppercase tracking-wider text-right">Actions</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-center">Attendance</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-center">Status</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-700">
@@ -581,10 +644,7 @@ export default function EngineersPage() {
                                             </td>
                                         )}
                                         <td className="px-4 py-4 text-center">
-                                            <span className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium border ${eng.attendance === 'Present' ? 'bg-success/10 text-success border-success/20' :
-                                                eng.attendance === 'Absent' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
-                                                    'bg-gray-700 text-muted border-gray-600'
-                                                }`}>
+                                            <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950`}>
                                                 {eng.attendance}
                                             </span>
                                         </td>
@@ -596,7 +656,7 @@ export default function EngineersPage() {
                                             )}
                                         </td>
                                         <td className="px-4 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex items-center justify-end gap-2 transition-opacity">
                                                 <button 
                                                     onClick={(e) => handleDeleteEngineer(e, eng._id)} 
                                                     className="p-1.5 rounded-md text-red-500/70 hover:text-red-500 hover:bg-red-500/10 transition-colors"
@@ -726,6 +786,67 @@ export default function EngineersPage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+            {/* Photo Viewer Carousel */}
+            {photoViewerOpen && (
+                <div className="fixed inset-0 z-[60] bg-black flex flex-col items-center justify-center p-6 backdrop-blur-3xl">
+                    <div className="absolute top-8 right-8 flex items-center gap-4">
+                        <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl backdrop-blur-md">
+                            <p className="text-white text-[10px] font-black uppercase tracking-[0.2em]">{currentViewerIndex + 1} / {currentViewerPhotos.length} Proofs</p>
+                        </div>
+                        <button 
+                            onClick={() => setPhotoViewerOpen(false)}
+                            className="p-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl transition-all border border-white/10"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+                    </div>
+
+                    <div className="relative w-full max-w-6xl h-full max-h-[75vh] flex items-center justify-center">
+                        <button 
+                            onClick={() => setCurrentViewerIndex(prev => (prev - 1 + currentViewerPhotos.length) % currentViewerPhotos.length)}
+                            className="absolute -left-4 md:-left-20 p-5 bg-white/5 hover:bg-white/10 text-white rounded-full transition-all z-10 border border-white/10 backdrop-blur-md"
+                        >
+                            <ArrowLeft className="w-8 h-8 opacity-50 hover:opacity-100" />
+                        </button>
+
+                        <div className="w-full h-full relative group shadow-[0_0_100px_rgba(0,0,0,0.5)]">
+                            <img 
+                                src={currentViewerPhotos[currentViewerIndex].url}
+                                className="w-full h-full object-contain rounded-[2rem]"
+                                alt="Registry Evidence"
+                            />
+                            
+                            <div className="absolute bottom-10 left-10 right-10 p-8 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                    <div>
+                                        <h4 className="text-white text-xl font-serif font-bold uppercase tracking-tight flex items-center gap-3">
+                                            {currentViewerPhotos[currentViewerIndex].type === 'in' ? <ArrowUpRight className="text-green-500 w-6 h-6" /> : <ArrowDownRight className="text-red-500 w-6 h-6" />}
+                                            {currentViewerPhotos[currentViewerIndex].title}
+                                        </h4>
+                                        <div className="flex flex-wrap items-center gap-6 mt-4">
+                                            <span className="flex items-center gap-3 text-slate-400 text-[10px] uppercase font-black tracking-widest">
+                                                <Clock className="w-4 h-4 text-primary" /> {currentViewerPhotos[currentViewerIndex].time}
+                                            </span>
+                                            <span className="flex items-center gap-3 text-slate-400 text-[10px] uppercase font-black tracking-widest">
+                                                <MapPin className="w-4 h-4 text-primary" /> {currentViewerPhotos[currentViewerIndex].location}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <a 
+                                            href={currentViewerPhotos[currentViewerIndex].url} 
+                                            target="_blank" 
+                                            className="p-4 bg-primary text-black rounded-2xl transition-all hover:scale-105 shadow-accent"
+                                        >
+                                            <Maximize2 className="w-5 h-5 font-black" />
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

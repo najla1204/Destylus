@@ -168,29 +168,26 @@ export default function LeavePage() {
                 {/* Stat Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div 
-                        className={`p-6 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between min-h-[150px] ${statusFilter === "Pending" ? "border-primary bg-primary/5 ring-1 ring-primary/20 shadow-lg shadow-primary/5" : "border-gray-800 bg-[#0B0D11] hover:border-gray-700/50"}`}
-                        onClick={() => setStatusFilter(statusFilter === "Pending" ? "All" : "Pending")}
+                        className="p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel transition-all flex flex-col justify-between min-h-[150px]"
                     >
-                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Pending Approval</span>
-                        <div className="text-4xl font-bold text-white leading-none">{pendingCount}</div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/60 dark:text-muted-foreground/40">Pending Approval</span>
+                        <div className="text-4xl font-bold text-foreground leading-none">{pendingCount}</div>
                         <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-primary">Awaiting Review</span>
                     </div>
 
                     <div 
-                        className={`p-6 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between min-h-[150px] ${statusFilter === "Approved" ? "border-green-500 bg-green-500/5 ring-1 ring-green-500/20 shadow-lg shadow-green-500/5" : "border-gray-800 bg-[#0B0D11] hover:border-gray-700/50"}`}
-                        onClick={() => setStatusFilter(statusFilter === "Approved" ? "All" : "Approved")}
+                        className="p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel transition-all flex flex-col justify-between min-h-[150px]"
                     >
-                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Approved Requests</span>
-                        <div className="text-4xl font-bold text-white leading-none">{approvedCount}</div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/60 dark:text-muted-foreground/40">Approved Requests</span>
+                        <div className="text-4xl font-bold text-foreground leading-none">{approvedCount}</div>
                         <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-green-500">Accepted</span>
                     </div>
 
                     <div 
-                        className={`p-6 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between min-h-[150px] ${statusFilter === "Rejected" ? "border-red-500 bg-red-500/5 ring-1 ring-red-500/20 shadow-lg shadow-red-500/5" : "border-gray-800 bg-[#0B0D11] hover:border-gray-700/50"}`}
-                        onClick={() => setStatusFilter(statusFilter === "Rejected" ? "All" : "Rejected")}
+                        className="p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel transition-all flex flex-col justify-between min-h-[150px]"
                     >
-                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Rejected Requests</span>
-                        <div className="text-4xl font-bold text-white leading-none">{rejectedCount}</div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/60 dark:text-muted-foreground/40">Rejected Requests</span>
+                        <div className="text-4xl font-bold text-foreground leading-none">{rejectedCount}</div>
                         <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-red-500">Declined</span>
                     </div>
                 </div>
@@ -315,7 +312,7 @@ export default function LeavePage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest border ${getStatusColor(req.status)}`}>
+                                            <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950`}>
                                                 {req.status}
                                             </span>
                                         </td>

@@ -93,13 +93,13 @@ export default function LaborEntryPage() {
                 <div className="rounded-xl border border-gray-700 bg-panel overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
-                            <thead className="bg-surface text-muted uppercase tracking-wider">
+                            <thead className="bg-surface border-b border-gray-700">
                                 <tr>
-                                    <th className="p-4 font-semibold">Category / Work Type</th>
-                                    <th className="p-4 font-semibold w-32">Members</th>
-                                    <th className="p-4 font-semibold w-40">Salary / Wage</th>
-                                    <th className="p-4 font-semibold w-40 text-right">Total</th>
-                                    <th className="p-4 w-16"></th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Category / Work Type</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest w-32">Members</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest w-40">Salary / Wage</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest w-40 text-right">Total</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest w-16"></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-700">

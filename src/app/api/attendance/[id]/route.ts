@@ -22,12 +22,8 @@ export async function PATCH(
       );
     }
 
-    if (status === 'rejected' && !rejectionReason) {
-      return NextResponse.json(
-        { error: 'Rejection reason is required' },
-        { status: 400 }
-      );
-    }
+    // rejectionReason is optional
+
 
     const updatedAttendance = await Attendance.findByIdAndUpdate(
       id,

@@ -395,17 +395,17 @@ export default function AttendancePage() {
     <div className="flex flex-col gap-6">
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-2">
-        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
           <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Monthly Presence</span>
-          <div className="text-4xl font-bold text-white leading-none">
+          <div className="text-4xl font-bold text-foreground leading-none">
              {attendanceLogs.length}
           </div>
           <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-primary">All Logs</span>
         </div>
 
-        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
           <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Session Status</span>
-          <div className="text-4xl font-bold text-white leading-none">
+          <div className="text-4xl font-bold text-foreground leading-none">
             {status.includes('checked-in') ? 'Active' : 'Idle'}
           </div>
           <span className={`text-[10px] uppercase tracking-[0.2em] font-bold ${status === 'checked-in' ? 'text-green-500' : 'text-muted-foreground/60'}`}>
@@ -413,9 +413,9 @@ export default function AttendancePage() {
           </span>
         </div>
 
-        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
           <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Approved</span>
-          <div className="text-4xl font-bold text-white leading-none">
+          <div className="text-4xl font-bold text-foreground leading-none">
             {attendanceLogs.filter(l => l.approvalStatus === 'approved').length}
           </div>
           <div className="flex items-center gap-1.5 text-[10px] text-green-500 font-bold uppercase tracking-[0.2em]">
@@ -423,9 +423,9 @@ export default function AttendancePage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
           <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Not Approved</span>
-          <div className="text-4xl font-bold text-white leading-none">
+          <div className="text-4xl font-bold text-foreground leading-none">
             {attendanceLogs.filter(l => l.approvalStatus !== 'approved').length}
           </div>
           <div className="flex items-center gap-1.5 text-[10px] text-red-500 font-bold uppercase tracking-[0.2em]">
@@ -504,16 +504,16 @@ export default function AttendancePage() {
       {/* Main Table Container */}
       <div className="overflow-x-auto rounded-xl border border-gray-700 bg-panel shadow-sm">
         <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="bg-surface border-b border-gray-700">
-              <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Employee</th>
+          <thead className="bg-surface text-muted border-b border-gray-700">
+            <tr>
+              <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Name</th>
               <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Site</th>
               <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Date</th>
-              <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Check In</th>
-              <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Check Out</th>
+              <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Check-In</th>
+              <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Check-Out</th>
               <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Hours</th>
               <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Status</th>
-              <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-right">Details</th>
+              <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
@@ -540,50 +540,52 @@ export default function AttendancePage() {
                     {new Date(log.checkInTime).toLocaleDateString()}
                 </td>
                 <td className="px-4 py-4">
-                  <div className="flex flex-col gap-1.5 text-xs font-medium">
+                  <div className="flex items-center gap-2 text-xs font-medium">
+                    {log.inTimePhoto && (
+                      <button 
+                        onClick={() => openPhotoViewerFromRecord(log, 'in')}
+                        className="relative group shrink-0"
+                      >
+                        <img src={log.inTimePhoto} alt="Check-In" className="w-8 h-8 rounded-full border border-primary/50 object-cover" />
+                        <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Camera size={12} className="text-white" />
+                        </div>
+                      </button>
+                    )}
                     <span className="text-green-500 flex items-center gap-1.5">
                       <Clock size={12} />
                       {new Date(log.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
-                    {log.inTimePhoto && (
-                      <button 
-                        onClick={() => openPhotoViewerFromRecord(log, 'in')}
-                        className="text-[10px] text-primary flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 hover:bg-primary/20 w-max transition-colors font-bold uppercase tracking-wider"
-                      >
-                        <Camera size={12} /> View Proof
-                      </button>
-                    )}
                   </div>
                 </td>
                 <td className="px-4 py-4">
-                  <div className="flex flex-col gap-1.5 text-xs font-medium">
+                  <div className="flex items-center gap-2 text-xs font-medium">
+                    {log.outTimePhoto && (
+                      <button 
+                        onClick={() => openPhotoViewerFromRecord(log, 'out')}
+                        className="relative group shrink-0"
+                      >
+                        <img src={log.outTimePhoto} alt="Check-Out" className="w-8 h-8 rounded-full border border-gray-500 object-cover" />
+                        <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Camera size={12} className="text-white" />
+                        </div>
+                      </button>
+                    )}
                     <span className={`${log.checkOutTime ? 'text-foreground' : 'text-blue-400 font-bold tracking-widest uppercase text-[10px]'} flex items-center gap-1.5`}>
                       {log.checkOutTime ? <Clock size={12} /> : null}
                       {log.checkOutTime ? new Date(log.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "ACTIVE"}
                     </span>
-                    {log.outTimePhoto && (
-                      <button 
-                        onClick={() => openPhotoViewerFromRecord(log, 'out')}
-                        className="text-[10px] text-primary flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 hover:bg-primary/20 w-max transition-colors font-bold uppercase tracking-wider"
-                      >
-                        <Camera size={12} /> View Proof
-                      </button>
-                    )}
                   </div>
                 </td>
                 <td className="px-4 py-4 font-medium text-foreground">
                   {log.totalHours ? `${log.totalHours.toFixed(1)}h` : "—"}
                 </td>
                 <td className="px-4 py-4">
-                  <span className={`px-2 py-0.5 rounded-lg text-xs font-medium border ${
-                    log.approvalStatus === 'approved' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
-                    log.approvalStatus === 'rejected' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
-                    'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
-                  }`}>
-                    {log.approvalStatus}
+                  <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950`}>
+                    {log.approvalStatus.charAt(0).toUpperCase() + log.approvalStatus.slice(1)}
                   </span>
                 </td>
-                <td className="px-4 py-4 text-right">
+               <td className="px-4 py-4 text-right">
                   <div className="flex justify-end gap-2">
                       {pmTab === "verify" ? (
                           <button 

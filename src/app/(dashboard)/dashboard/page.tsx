@@ -6,6 +6,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell
 } from 'recharts';
+import { useTheme } from "next-themes";
 import {
     TrendingUp,
     AlertTriangle,
@@ -86,7 +87,47 @@ const INITIAL_EMPLOYEES: Employee[] = [
     { id: "3", name: "Sarah Connor", role: "Safety Officer", site: "River Bridge Expansion", status: "Active" },
 ];
 
+const CustomChartTooltip = ({ active, payload, label, formatter }: any) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-panel p-4 shadow-xl backdrop-blur-sm animate-in fade-in zoom-in duration-200">
+                {label && <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-muted-foreground/60 mb-2">{label}</p>}
+                <div className="space-y-1.5">
+                    {payload.map((entry: any, index: number) => {
+                        let displayValue = entry.value;
+                        let displayName = entry.name;
+                        
+                        if (formatter) {
+                            const formatted = formatter(entry.value, entry.name, entry, index, payload);
+                            if (Array.isArray(formatted)) {
+                                displayValue = formatted[0];
+                                displayName = formatted[1];
+                            } else {
+                                displayValue = formatted;
+                            }
+                        }
+                        
+                        return (
+                            <div key={`item-${index}`} className="flex items-center justify-between gap-8">
+                                <span className="text-xs font-medium text-foreground/80 flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color || entry.fill || '#FFC107' }} />
+                                    {displayName}:
+                                </span>
+                                <span className="text-xs font-bold text-foreground">
+                                    {displayValue}
+                                </span>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    }
+    return null;
+};
+
 function DashboardContent() {
+    const { theme } = useTheme();
     const [userRole, setUserRole] = useState<string>("");
     const [userName, setUserName] = useState<string>("");
     const searchParams = useSearchParams();
@@ -308,49 +349,45 @@ function DashboardContent() {
 
                 {/* Premium Stats Grid */}
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                    <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
-                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Total Employees</span>
-                        <div className="text-4xl font-bold text-white leading-none">{employees.length}</div>
-                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-500">Active Workforce</span>
+                    <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 dark:text-muted-foreground/40">Total Employees</span>
+                        <div className="text-4xl font-bold text-foreground leading-none">{employees.length}</div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-600 dark:text-blue-500">Active Workforce</span>
                     </div>
                     
-                    <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
-                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Active Sites</span>
-                        <div className="text-4xl font-bold text-white leading-none">{sites.length}</div>
-                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-yellow-500">Ongoing Projects</span>
+                    <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 dark:text-muted-foreground/40">Active Sites</span>
+                        <div className="text-4xl font-bold text-foreground leading-none">{sites.length}</div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-yellow-600 dark:text-yellow-500">Ongoing Projects</span>
                     </div>
 
-                    <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
-                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Pending Claims</span>
-                        <div className="text-4xl font-bold text-white leading-none">8</div>
-                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-red-500">Requires Approval</span>
+                    <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 dark:text-muted-foreground/40">Pending Claims</span>
+                        <div className="text-4xl font-bold text-foreground leading-none">8</div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-red-600 dark:text-red-500">Requires Approval</span>
                     </div>
 
-                    <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
-                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Payroll Status</span>
-                        <div className="text-xl font-bold text-white leading-none pt-2 uppercase">Pending</div>
-                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/60">For Current Month</span>
+                    <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 dark:text-muted-foreground/40">Payroll Status</span>
+                        <div className="text-xl font-bold text-foreground leading-none pt-2 uppercase">Pending</div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-600 dark:text-muted-foreground/60">For Current Month</span>
                     </div>
                 </div>
 
-                {/* Dashboard Charts */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
                     {/* Graph 1: Workers per Site */}
-                    <div className="rounded-2xl bg-panel border-gray-700 p-6 shadow-xl">
+                    <div className="rounded-2xl bg-panel border border-gray-200 dark:border-gray-800 p-6 shadow-xl transition-all">
                         <div className="mb-6 flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-white uppercase tracking-wider">Workers Assignment per Site</h3>
+                            <h3 className="text-lg font-semibold text-foreground uppercase tracking-wider">Workers Assignment per Site</h3>
                             <Users size={18} className="text-[#FFC107]" />
                         </div>
-                        <div className="h-[300px]">
+                        <div className="h-[300px] min-w-0">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={sitesWithWorkers} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#333' : '#e2e8f0'} vertical={false} />
                                     <XAxis dataKey="name" stroke="#888" tick={{ fill: '#888', fontSize: 12 }} />
                                     <YAxis stroke="#888" tick={{ fill: '#888', fontSize: 12 }} />
-                                    <RechartsTooltip 
-                                        contentStyle={{ backgroundColor: '#1A1A1A', border: '1px solid #333', borderRadius: '8px' }}
-                                        itemStyle={{ color: '#FFC107' }}
-                                    />
+                                    <RechartsTooltip content={<CustomChartTooltip />} />
                                     <Bar dataKey="workers" name="Total Workers" fill="#FFC107" radius={[4, 4, 0, 0]} barSize={40} />
                                 </BarChart>
                             </ResponsiveContainer>
@@ -358,12 +395,12 @@ function DashboardContent() {
                     </div>
 
                     {/* Graph 2: Budget Distribution */}
-                    <div className="rounded-2xl bg-panel border-gray-700 p-6 shadow-xl">
+                    <div className="rounded-2xl bg-panel border border-gray-200 dark:border-gray-800 p-6 shadow-xl transition-all">
                         <div className="mb-6 flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-white uppercase tracking-wider">Budget Allocation</h3>
+                            <h3 className="text-lg font-semibold text-foreground uppercase tracking-wider">Budget Allocation</h3>
                             <DollarSign size={18} className="text-[#FFC107]" />
                         </div>
-                        <div className="h-[300px] flex items-center justify-center">
+                        <div className="h-[300px] min-w-0 flex items-center justify-center">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
@@ -380,8 +417,7 @@ function DashboardContent() {
                                         ))}
                                     </Pie>
                                     <RechartsTooltip 
-                                        formatter={(value: any) => [`₹${(Number(value)/100000).toFixed(1)}L`, 'Budget']}
-                                        contentStyle={{ backgroundColor: '#1A1A1A', border: '1px solid #333', borderRadius: '8px' }}
+                                        content={<CustomChartTooltip formatter={(value: any) => [`₹${(Number(value)/100000).toFixed(1)}L`, 'Budget']} />}
                                     />
                                     <Legend 
                                         verticalAlign="bottom" 
@@ -426,7 +462,7 @@ function DashboardContent() {
                 </div>
 
                 {/* Filters */}
-                <div className="flex items-center gap-4 border-b border-gray-700 pb-4">
+                <div className="flex items-center gap-4 border-b border-gray-200 dark:border-gray-800 pb-4">
                     <button
                         onClick={() => setShowAssignedOnly(false)}
                         className={`text-sm font-medium transition-colors ${!showAssignedOnly ? "text-primary" : "text-muted hover:text-foreground"}`}
@@ -439,7 +475,7 @@ function DashboardContent() {
                     >
                         My Assigned Sites
                     </button>
-                    <div className="ml-auto flex items-center gap-2 rounded-lg bg-surface px-3 py-1.5 border border-gray-700 focus-within:border-primary transition-colors">
+                    <div className="ml-auto flex items-center gap-2 rounded-lg bg-surface px-3 py-1.5 border border-gray-200 dark:border-gray-800 focus-within:border-primary transition-colors">
                         <Search size={16} className="text-muted" />
                         <input
                             type="text"
@@ -455,7 +491,7 @@ function DashboardContent() {
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {filteredSites.map((site) => (
                         // ... remaining grid content ...
-                        <div key={site.id} className="group relative flex flex-col rounded-xl border border-gray-700 bg-panel shadow-sm transition-all hover:-translate-y-1 hover:border-primary/50">
+                        <div key={site.id} className="group relative flex flex-col rounded-xl border border-gray-200 dark:border-gray-700 bg-panel shadow-sm transition-all hover:-translate-y-1 hover:border-primary/50">
                             <Link href={`/sites/${site.id}`} className="flex-1 p-6">
                                 <div className="mb-4 flex items-start justify-between">
                                     <div className="rounded-lg bg-primary/10 p-2">
@@ -469,10 +505,7 @@ function DashboardContent() {
                                             alt={site.status === 'Planning' ? "blueprint" : "road-worker"}
                                         />
                                     </div>
-                                    <span className={`rounded-lg px-2.5 py-0.5 text-xs font-medium border ${site.status === 'Active' ? 'bg-success/10 text-success border-success/20' :
-                                        site.status === 'Completed' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
-                                            'bg-warning/10 text-warning border-warning/20'
-                                        }`}>
+                                    <span className="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950">
                                         {site.status}
                                     </span>
                                 </div>
@@ -495,7 +528,7 @@ function DashboardContent() {
                                 </div>
                             </Link>
 
-                            <div className="flex items-center justify-between border-t border-gray-700 p-4 pt-4">
+                            <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 p-4 pt-4">
                                 <span className="text-xs text-muted pl-2">Click to view details</span>
                                 <div className="flex gap-2">
                                     <button
@@ -516,7 +549,7 @@ function DashboardContent() {
                 </div>
 
                 {filteredSites.length === 0 && (
-                    <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-dashed border-gray-700 bg-surface/50 text-center">
+                    <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 dark:border-gray-700 bg-surface/50 text-center">
                         <Building className="mb-4 text-muted/50" size={48} />
                         <p className="text-muted">No sites found.</p>
                         {showAssignedOnly && <p className="text-sm text-muted/60">Try switching to "All Sites" view.</p>}
@@ -526,7 +559,7 @@ function DashboardContent() {
                 {/* Add Site Modal (Shared) */}
                 {showAddSiteModal && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                        <div className="w-full max-w-md rounded-xl bg-panel p-6 shadow-xl border border-gray-700">
+                        <div className="w-full max-w-md rounded-xl bg-panel p-6 shadow-xl border border-gray-200 dark:border-gray-700">
                             <h2 className="mb-4 text-xl font-bold text-foreground">Add New Site</h2>
                             <form onSubmit={handleAddSite} className="space-y-4">
                                 <div>
@@ -577,7 +610,7 @@ function DashboardContent() {
                                     <button
                                         type="button"
                                         onClick={() => setShowAddSiteModal(false)}
-                                        className="flex-1 rounded-lg border border-gray-700 px-4 py-2 text-sm font-semibold text-muted hover:bg-surface transition-colors"
+                                        className="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-2 text-sm font-semibold text-muted hover:bg-surface transition-colors"
                                     >
                                         Cancel
                                     </button>
@@ -643,9 +676,9 @@ function DashboardContent() {
     return (
         <div className="space-y-10 pb-12">
             {/* Header Section */}
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between border-b border-white/5 pb-8">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between border-b border-gray-200 dark:border-white/5 pb-8">
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 rounded-2xl bg-white/[0.03] px-4 py-2 border border-white/10 shadow-inner group hover:border-primary/30 transition-all">
+                    <div className="flex items-center gap-2 rounded-2xl bg-panel dark:bg-white/[0.03] px-4 py-2 border border-gray-200 dark:border-white/10 shadow-inner group hover:border-primary/30 transition-all">
                         <MapPin size={14} className="text-primary" />
                         <select 
                             className="bg-transparent border-none text-xs font-bold text-slate-300 focus:outline-none appearance-none pr-6 cursor-pointer uppercase tracking-wider"
@@ -671,25 +704,25 @@ function DashboardContent() {
                 <>
                     {/* Row 1: 4 Stat Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
-                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Assigned Sites</span>
-                            <div className="text-4xl font-bold text-white leading-none">{engineerSites.length}</div>
-                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-success">Active</span>
+                        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 dark:text-muted-foreground/40">Assigned Sites</span>
+                            <div className="text-4xl font-bold text-foreground leading-none">{engineerSites.length}</div>
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-green-700 dark:text-success">Active</span>
                         </div>
-                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
-                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Total Materials</span>
-                            <div className="text-4xl font-bold text-white leading-none">{approvedMats.length}</div>
-                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-400">Recorded Quantity</span>
+                        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 dark:text-muted-foreground/40">Total Materials</span>
+                            <div className="text-4xl font-bold text-foreground leading-none">{approvedMats.length}</div>
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-600 dark:text-blue-400">Recorded Quantity</span>
                         </div>
-                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
-                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Open Issues</span>
-                            <div className="text-4xl font-bold text-white leading-none">{dashData.issues.filter((i:any) => i.status !== 'Resolved').length}</div>
-                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-red-400">Requires Attention</span>
+                        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 dark:text-muted-foreground/40">Open Issues</span>
+                            <div className="text-4xl font-bold text-foreground leading-none">{dashData.issues.filter((i:any) => i.status !== 'Resolved').length}</div>
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-red-600 dark:text-red-400">Requires Attention</span>
                         </div>
-                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
-                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Leave Requests</span>
-                            <div className="text-4xl font-bold text-white leading-none">{(dashData.leaves || []).length}</div>
-                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-purple-400">{(dashData.leaves || []).filter((l:any) => l.status === 'Pending').length} Pending</span>
+                        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 dark:text-muted-foreground/40">Leave Requests</span>
+                            <div className="text-4xl font-bold text-foreground leading-none">{(dashData.leaves || []).length}</div>
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-purple-600 dark:text-purple-400">{(dashData.leaves || []).filter((l:any) => l.status === 'Pending').length} Pending</span>
                         </div>
                     </div>
 
@@ -698,21 +731,16 @@ function DashboardContent() {
                         {/* Site Engineer Attendance This Week */}
                         <div className="premium-card p-8 flex flex-col h-[450px]">
                             <div className="mb-8">
-                                <h3 className="text-xl font-bold text-white font-serif tracking-tight uppercase">Engineer Attendance</h3>
-                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Current Week Analysis</p>
+                                <h3 className="text-xl font-bold text-foreground font-serif tracking-tight uppercase">Engineer Attendance</h3>
+                                <p className="text-[10px] text-slate-500 dark:text-muted-foreground/60 font-bold uppercase tracking-widest mt-1">Current Week Analysis</p>
                             </div>
-                            <div className="flex-1 min-h-0">
+                            <div className="flex-1 min-h-0 min-w-0 relative">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={attendanceWeeklyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
-                                        <XAxis dataKey="date" stroke="#ffffff40" tick={{ fill: '#ffffff60', fontSize: 10, fontWeight: 'bold' }} axisLine={false} tickLine={false} dy={10} />
-                                        <YAxis stroke="#ffffff40" tick={{ fill: '#ffffff60', fontSize: 10, fontWeight: 'bold' }} axisLine={false} tickLine={false} dx={-10} allowDecimals={false} />
-                                        <RechartsTooltip 
-                                            cursor={{ fill: '#ffffff05' }}
-                                            contentStyle={{ backgroundColor: '#0B0D11', border: '1px solid #ffffff10', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
-                                            itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
-                                            labelStyle={{ color: '#ffffff60', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}
-                                        />
+                                        <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#ffffff08' : '#e2e8f0'} vertical={false} />
+                                        <XAxis dataKey="date" stroke={theme === 'dark' ? '#ffffff40' : '#94a3b8'} tick={{ fill: theme === 'dark' ? '#ffffff60' : '#64748b', fontSize: 10, fontWeight: 'bold' }} axisLine={false} tickLine={false} dy={10} />
+                                        <YAxis stroke={theme === 'dark' ? '#ffffff40' : '#94a3b8'} tick={{ fill: theme === 'dark' ? '#ffffff60' : '#64748b', fontSize: 10, fontWeight: 'bold' }} axisLine={false} tickLine={false} dx={-10} allowDecimals={false} />
+                                        <RechartsTooltip cursor={{ fill: theme === 'dark' ? '#ffffff05' : '#00000005' }} content={<CustomChartTooltip />} />
                                         <Legend wrapperStyle={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', paddingTop: '20px' }} iconType="circle" />
                                         <Bar dataKey="Engineers" fill="#3B82F6" radius={[6, 6, 0, 0]} barSize={28} />
                                     </BarChart>
@@ -723,21 +751,16 @@ function DashboardContent() {
                         {/* Approved Materials */}
                         <div className="premium-card p-8 flex flex-col h-[450px]">
                             <div className="mb-8">
-                                <h3 className="text-xl font-bold text-white font-serif tracking-tight uppercase">Materials Forecast</h3>
-                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">{activeSiteId === 'All' ? 'All Sites' : 'Selected Site'} • Weekly Approved Quantities</p>
+                                <h3 className="text-xl font-bold text-foreground font-serif tracking-tight uppercase">Materials Forecast</h3>
+                                <p className="text-[10px] text-slate-500 dark:text-muted-foreground/60 font-bold uppercase tracking-widest mt-1">{activeSiteId === 'All' ? 'All Sites' : 'Selected Site'} • Weekly Approved Quantities</p>
                             </div>
-                            <div className="flex-1 min-h-0">
+                            <div className="flex-1 min-h-0 min-w-0 relative">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={materialsWeeklyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
-                                        <XAxis dataKey="date" stroke="#ffffff40" tick={{ fill: '#ffffff60', fontSize: 10, fontWeight: 'bold' }} axisLine={false} tickLine={false} dy={10} />
-                                        <YAxis stroke="#ffffff40" tick={{ fill: '#ffffff60', fontSize: 10, fontWeight: 'bold' }} axisLine={false} tickLine={false} dx={-10} allowDecimals={false} />
-                                        <RechartsTooltip 
-                                            cursor={{ fill: '#ffffff05' }}
-                                            contentStyle={{ backgroundColor: '#0B0D11', border: '1px solid #ffffff10', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
-                                            itemStyle={{ fontSize: '12px', fontWeight: 'bold', color: '#10B981' }}
-                                            labelStyle={{ color: '#ffffff60', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}
-                                        />
+                                        <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#ffffff08' : '#e2e8f0'} vertical={false} />
+                                        <XAxis dataKey="date" stroke={theme === 'dark' ? '#ffffff40' : '#94a3b8'} tick={{ fill: theme === 'dark' ? '#ffffff60' : '#64748b', fontSize: 10, fontWeight: 'bold' }} axisLine={false} tickLine={false} dy={10} />
+                                        <YAxis stroke={theme === 'dark' ? '#ffffff40' : '#94a3b8'} tick={{ fill: theme === 'dark' ? '#ffffff60' : '#64748b', fontSize: 10, fontWeight: 'bold' }} axisLine={false} tickLine={false} dx={-10} allowDecimals={false} />
+                                        <RechartsTooltip cursor={{ fill: theme === 'dark' ? '#ffffff05' : '#00000005' }} content={<CustomChartTooltip />} />
                                         <Bar dataKey="Quantity" name="Total Materials" fill="#10B981" radius={[6, 6, 0, 0]} barSize={28} />
                                     </BarChart>
                                 </ResponsiveContainer>
@@ -751,7 +774,7 @@ function DashboardContent() {
                         <div className="premium-card p-8 flex flex-col h-[400px]">
                             <div className="mb-6 flex items-center gap-3 shrink-0">
                                 <Activity size={18} className="text-blue-500" />
-                                <h4 className="text-xs font-bold text-white uppercase tracking-[0.2em]">Recent Activity Logs</h4>
+                                <h4 className="text-xs font-bold text-foreground uppercase tracking-[0.2em]">Recent Activity Logs</h4>
                             </div>
                             <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar pr-2">
                                 {[
@@ -761,13 +784,13 @@ function DashboardContent() {
                                     ...(dashData.leaves || []).map((l: any) => ({ _id: l._id, type: 'Leave', icon: <Calendar size={14} className="text-purple-400"/>, title: `${l.type || 'Leave'} Request`, detail: `${l.employeeName || 'You'} • ${new Date(l.from).toLocaleDateString()} to ${new Date(l.to).toLocaleDateString()}`, date: l.createdAt || new Date().toISOString(), status: l.status })),
                                     ...(dashData.attendance?.engineerRecords || []).slice(0, 5).map((a: any) => ({ _id: a._id, type: 'Attendance', icon: <CheckCircle size={14} className="text-green-400"/>, title: `Attendance Logged`, detail: `${a.employeeName || 'Engineer'} • ${a.site || 'Site'} • ${a.totalHours ? a.totalHours.toFixed(1) + 'h' : 'Active'}`, date: a.checkInTime || a.createdAt || new Date().toISOString(), status: a.approvalStatus === 'approved' ? 'Approved' : a.approvalStatus === 'rejected' ? 'Rejected' : 'Pending' }))
                                 ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5).map((log: any, index: number) => (
-                                    <div key={`${log.type}-${log._id}-${index}`} className="flex items-center gap-4 p-4 bg-white/[0.02] border border-white/5 rounded-xl hover:border-primary/20 transition-colors">
+                                    <div key={`${log.type}-${log._id}-${index}`} className="flex items-center gap-4 p-4 bg-white/[0.02] border border-gray-200 dark:border-white/5 rounded-xl hover:border-primary/20 transition-colors">
                                         <div className="p-2 bg-white/[0.05] rounded-lg shrink-0">
                                             {log.icon}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-start gap-2">
-                                                <h5 className="text-[12px] font-bold text-white uppercase tracking-wider truncate">{log.title}</h5>
+                                                <h5 className="text-[12px] font-bold text-foreground uppercase tracking-wider truncate">{log.title}</h5>
                                                 <span className="text-[9px] text-slate-500 shrink-0">{new Date(log.date).toLocaleDateString()}</span>
                                             </div>
                                             <p className="text-[10px] text-slate-400 mt-1 truncate">{log.detail}</p>
@@ -797,28 +820,28 @@ function DashboardContent() {
                         <div className="premium-card p-8 flex flex-col h-[400px]">
                             <div className="mb-6 flex items-center gap-3 shrink-0">
                                 <Activity size={18} className="text-blue-500" />
-                                <h4 className="text-xs font-bold text-white uppercase tracking-[0.2em]">Quick Actions</h4>
+                                <h4 className="text-xs font-bold text-foreground uppercase tracking-[0.2em]">Quick Actions</h4>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
-                                <Link href="/attendance" className="flex flex-col items-center justify-center gap-3 p-5 bg-white/[0.02] border border-white/5 rounded-xl hover:bg-primary/10 hover:border-primary/30 transition-all group">
+                                <Link href="/attendance" className="flex flex-col items-center justify-center gap-3 p-5 bg-white/[0.02] border border-gray-200 dark:border-white/5 rounded-xl hover:bg-primary/10 hover:border-primary/30 transition-all group">
                                     <div className="p-3 bg-white/[0.05] rounded-xl group-hover:bg-primary/20 transition-colors">
                                         <Users size={20} className="text-slate-400 group-hover:text-primary transition-colors" />
                                     </div>
                                     <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest text-center">Log Attendance</span>
                                 </Link>
-                                <Link href="/leave" className="flex flex-col items-center justify-center gap-3 p-5 bg-white/[0.02] border border-white/5 rounded-xl hover:bg-purple-500/10 hover:border-purple-500/30 transition-all group">
+                                <Link href="/leave" className="flex flex-col items-center justify-center gap-3 p-5 bg-white/[0.02] border border-gray-200 dark:border-white/5 rounded-xl hover:bg-purple-500/10 hover:border-purple-500/30 transition-all group">
                                     <div className="p-3 bg-white/[0.05] rounded-xl group-hover:bg-purple-500/20 transition-colors">
                                         <Calendar size={20} className="text-slate-400 group-hover:text-purple-500 transition-colors" />
                                     </div>
                                     <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest text-center">Leave Requests</span>
                                 </Link>
-                                <Link href="/sites" className="flex flex-col items-center justify-center gap-3 p-5 bg-white/[0.02] border border-white/5 rounded-xl hover:bg-blue-500/10 hover:border-blue-500/30 transition-all group">
+                                <Link href="/sites" className="flex flex-col items-center justify-center gap-3 p-5 bg-white/[0.02] border border-gray-200 dark:border-white/5 rounded-xl hover:bg-blue-500/10 hover:border-blue-500/30 transition-all group">
                                     <div className="p-3 bg-white/[0.05] rounded-xl group-hover:bg-blue-500/20 transition-colors">
                                         <Building size={20} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
                                     </div>
                                     <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest text-center">My Sites</span>
                                 </Link>
-                                <Link href={`/sites/${activeSiteId !== 'All' ? activeSiteId : (engineerSites[0]?._id || engineerSites[0]?.id || '')}?tab=Issues`} className="flex flex-col items-center justify-center gap-3 p-5 bg-white/[0.02] border border-white/5 rounded-xl hover:bg-red-500/10 hover:border-red-500/30 transition-all group">
+                                <Link href={`/sites/${activeSiteId !== 'All' ? activeSiteId : (engineerSites[0]?._id || engineerSites[0]?.id || '')}?tab=Issues`} className="flex flex-col items-center justify-center gap-3 p-5 bg-white/[0.02] border border-gray-200 dark:border-white/5 rounded-xl hover:bg-red-500/10 hover:border-red-500/30 transition-all group">
                                     <div className="p-3 bg-white/[0.05] rounded-xl group-hover:bg-red-500/20 transition-colors">
                                         <AlertTriangle size={20} className="text-slate-400 group-hover:text-red-500 transition-colors" />
                                     </div>
