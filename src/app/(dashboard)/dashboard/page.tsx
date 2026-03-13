@@ -147,6 +147,8 @@ function DashboardContent() {
     const [employees, setEmployees] = useState<Employee[]>(INITIAL_EMPLOYEES);
     const [newEmployee, setNewEmployee] = useState<Partial<Employee>>({ name: "", role: "Site Engineer", site: "", status: "Active" });
     const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
+    const [workerDistribution, setWorkerDistribution] = useState<any[]>([]);
+    const [loadingDistribution, setLoadingDistribution] = useState(false);
 
     useEffect(() => {
         const role = localStorage.getItem("userRole") || "";
@@ -170,6 +172,19 @@ function DashboardContent() {
             localStorage.setItem("destylus_dashboard_employees_v2", JSON.stringify(INITIAL_EMPLOYEES));
         }
     }, []);
+
+    useEffect(() => {
+        if (userRole === "HR Manager") {
+            setLoadingDistribution(true);
+            fetch("/api/hr/worker-distribution")
+                .then(res => res.json())
+                .then(data => {
+                    setWorkerDistribution(Array.isArray(data) ? data : []);
+                })
+                .catch(err => console.error("Error fetching worker distribution:", err))
+                .finally(() => setLoadingDistribution(false));
+        }
+    }, [userRole]);
 
     // --- Site Handlers ---
     const filteredSites = sites.filter(site => {
@@ -375,22 +390,36 @@ function DashboardContent() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-                    {/* Graph 1: Workers per Site */}
+                    {/* Graph 1: Worker Distribution by Role */}
                     <div className="rounded-2xl bg-panel border border-gray-200 dark:border-gray-800 p-6 shadow-xl transition-all">
                         <div className="mb-6 flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-foreground uppercase tracking-wider">Workers Assignment per Site</h3>
+                            <h3 className="text-lg font-semibold text-foreground uppercase tracking-wider">Worker Distribution by Role</h3>
                             <Users size={18} className="text-[#FFC107]" />
                         </div>
                         <div className="h-[300px] min-w-0">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={sitesWithWorkers} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#333' : '#e2e8f0'} vertical={false} />
-                                    <XAxis dataKey="name" stroke="#888" tick={{ fill: '#888', fontSize: 12 }} />
-                                    <YAxis stroke="#888" tick={{ fill: '#888', fontSize: 12 }} />
-                                    <RechartsTooltip content={<CustomChartTooltip />} />
-                                    <Bar dataKey="workers" name="Total Workers" fill="#FFC107" radius={[4, 4, 0, 0]} barSize={40} />
-                                </BarChart>
-                            </ResponsiveContainer>
+                            {loadingDistribution ? (
+                                <div className="flex h-full items-center justify-center">
+                                    <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-primary"></div>
+                                </div>
+                            ) : workerDistribution.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={workerDistribution} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#333' : '#e2e8f0'} vertical={false} />
+                                        <XAxis 
+                                            dataKey="role" 
+                                            stroke="#888" 
+                                            tick={{ fill: '#888', fontSize: 12 }}
+                                        />
+                                        <YAxis stroke="#888" tick={{ fill: '#888', fontSize: 12 }} />
+                                        <RechartsTooltip content={<CustomChartTooltip />} />
+                                        <Bar dataKey="count" name="Total Workers" fill="#FFC107" radius={[4, 4, 0, 0]} barSize={40} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="flex h-full flex-col items-center justify-center text-center">
+                                    <span className="text-muted text-sm">No worker data available</span>
+                                </div>
+                            )}
                         </div>
                     </div>
 
