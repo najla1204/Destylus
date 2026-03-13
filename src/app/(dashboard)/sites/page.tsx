@@ -437,7 +437,7 @@ export default function SitesPage() {
                             </div>
                         )}
                         {!isEngineer && (
-                            <div className="w-48 text-[10px] uppercase tracking-widest text-foreground font-bold font-mono">
+                            <div className="w-64 text-[10px] uppercase tracking-widest text-foreground font-bold font-mono">
                                 <MultiSelect 
                                     options={availableEngineers} 
                                     selected={selectedEngineers} 
