@@ -155,6 +155,8 @@ function DashboardContent() {
         totalPettyCash: 0,
         totalEmployees: 0
     });
+    const [materialUsage, setMaterialUsage] = useState<any[]>([]);
+    const [loadingMaterialUsage, setLoadingMaterialUsage] = useState(false);
 
     useEffect(() => {
         const role = localStorage.getItem("userRole") || "";
