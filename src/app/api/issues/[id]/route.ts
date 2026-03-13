@@ -12,6 +12,9 @@ export async function PUT(
     
     const updateData: any = {};
     if (body.status) updateData.status = body.status;
+    if (body.statusChangedBy) updateData.statusChangedBy = body.statusChangedBy;
+    if (body.statusChangedByRole) updateData.statusChangedByRole = body.statusChangedByRole;
+    if (body.resolvedBy) updateData.resolvedBy = body.resolvedBy;
 
     const issue = await Issue.findByIdAndUpdate(
       id,

@@ -386,27 +386,27 @@ export default function SitesPage() {
 
                 {/* Stat Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50 cursor-pointer">
+                    <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50 cursor-pointer">
                         <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Total Sites</span>
-                        <div className="text-4xl font-bold text-white leading-none">{sites.length}</div>
+                        <div className="text-4xl font-bold text-foreground leading-none">{sites.length}</div>
                         <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-primary">All Records</span>
                     </div>
                     
-                    <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50 cursor-pointer">
+                    <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50 cursor-pointer">
                         <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Active Sites</span>
-                        <div className="text-4xl font-bold text-white leading-none">{sites.filter(s => s.status === "Active").length}</div>
+                        <div className="text-4xl font-bold text-foreground leading-none">{sites.filter(s => s.status === "Active").length}</div>
                         <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-green-500">Currently Active</span>
                     </div>
                     
-                    <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50 cursor-pointer">
+                    <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50 cursor-pointer">
                         <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Total Engineers</span>
-                        <div className="text-4xl font-bold text-white leading-none">{sites.reduce((acc, s) => acc + (s.engineers?.length || 0), 0)}</div>
+                        <div className="text-4xl font-bold text-foreground leading-none">{sites.reduce((acc, s) => acc + (s.engineers?.length || 0), 0)}</div>
                         <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-400">Allocated</span>
                     </div>
                     
-                    <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50 cursor-pointer">
+                    <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50 cursor-pointer">
                         <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Open Issues</span>
-                        <div className="text-4xl font-bold text-white leading-none">{sites.reduce((acc, s) => acc + (s.issueCount || 0), 0)}</div>
+                        <div className="text-4xl font-bold text-foreground leading-none">{sites.reduce((acc, s) => acc + (s.issueCount || 0), 0)}</div>
                         <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-red-500">Require Attn</span>
                     </div>
                 </div>
@@ -550,14 +550,7 @@ export default function SitesPage() {
                         </div>
 
                         <div className="absolute top-4 right-4">
-                            <span
-                                className={`rounded-full px-2.5 py-0.5 text-xs font-bold border shadow-sm ${site.status === "Active"
-                                    ? "bg-success/10 text-success border-success/20"
-                                    : (site.status === "Pending" || site.status === "Planning")
-                                        ? "bg-warning/10 text-warning border-warning/20"
-                                        : "bg-gray-500/10 text-gray-400 border-gray-500/20"
-                                    }`}
-                            >
+                            <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950`}>
                                 {site.status}
                             </span>
                         </div>
@@ -626,9 +619,7 @@ export default function SitesPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[8px] font-bold uppercase tracking-widest border shadow-sm ${
-                                                (site.issueCount || 0) > 0 ? "bg-primary text-black border-transparent" : "bg-success text-black border-success/20"
-                                            }`}>
+                                            <span className={`inline-flex px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950`}>
                                                 {site.issueCount || 0} ACTIVE
                                             </span>
                                         </td>

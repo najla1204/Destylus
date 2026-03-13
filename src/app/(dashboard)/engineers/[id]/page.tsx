@@ -226,11 +226,7 @@ export default function EngineerDetailsPage() {
                         </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                        <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${
-                            engineer.isActive !== false
-                                ? "bg-green-500/10 text-green-400 border-green-500/20"
-                                : "bg-gray-500/10 text-gray-400 border-gray-500/20"
-                        }`}>
+                        <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950`}>
                             {engineer.isActive !== false ? "Active" : "Inactive"}
                         </span>
                     </div>
@@ -262,11 +258,7 @@ export default function EngineerDetailsPage() {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <span className={`text-xs px-2.5 py-1 rounded-full border font-semibold ${
-                                        site.status === "Active" ? "bg-green-500/10 text-green-400 border-green-500/20" :
-                                        site.status === "Completed" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
-                                        "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
-                                    }`}>
+                                    <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950`}>
                                         {site.status}
                                     </span>
                                     <ChevronRight size={16} className="text-muted group-hover:text-primary transition-colors" />
@@ -354,13 +346,13 @@ export default function EngineerDetailsPage() {
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
-                                <thead className="text-muted border-b border-gray-700">
+                                <thead className="bg-surface border-b border-gray-700 text-muted">
                                     <tr>
-                                        <th className="px-4 py-3 font-semibold uppercase tracking-wider">Title</th>
-                                        <th className="px-4 py-3 font-semibold uppercase tracking-wider text-center">Type</th>
-                                        <th className="px-4 py-3 font-semibold uppercase tracking-wider text-right">Amount</th>
-                                        <th className="px-4 py-3 font-semibold uppercase tracking-wider">Logged By</th>
-                                        <th className="px-4 py-3 font-semibold uppercase tracking-wider">Date</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Title</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-center">Type</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-right">Amount</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Logged By</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Date</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-700">
@@ -368,11 +360,7 @@ export default function EngineerDetailsPage() {
                                         <tr key={tx._id} className="hover:bg-surface/50 transition-colors">
                                             <td className="px-4 py-3 font-medium text-foreground">{tx.title}</td>
                                             <td className="px-4 py-3 text-center">
-                                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${
-                                                    tx.type === "Allocation"
-                                                        ? "bg-green-500/10 text-green-400 border-green-500/20"
-                                                        : "bg-red-500/10 text-red-400 border-red-500/20"
-                                                }`}>
+                                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950`}>
                                                     {tx.type === "Allocation" ? <ArrowDownRight size={12} /> : <ArrowUpRight size={12} />}
                                                     {tx.type}
                                                 </span>
@@ -414,13 +402,13 @@ export default function EngineerDetailsPage() {
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
-                                <thead className="text-muted border-b border-gray-700">
+                                <thead className="bg-surface border-b border-gray-700 text-muted">
                                     <tr>
-                                        <th className="px-4 py-3 font-semibold uppercase tracking-wider">Type</th>
-                                        <th className="px-4 py-3 font-semibold uppercase tracking-wider">From</th>
-                                        <th className="px-4 py-3 font-semibold uppercase tracking-wider">To</th>
-                                        <th className="px-4 py-3 font-semibold uppercase tracking-wider">Reason</th>
-                                        <th className="px-4 py-3 font-semibold uppercase tracking-wider text-center">Status</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Type</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">From</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">To</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Reason</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-center">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-700">
@@ -431,7 +419,7 @@ export default function EngineerDetailsPage() {
                                             <td className="px-4 py-3 text-muted">{lr.to}</td>
                                             <td className="px-4 py-3 text-muted italic">{lr.reason}</td>
                                             <td className="px-4 py-3 text-center">
-                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${leaveStatusColor(lr.status)}`}>
+                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950`}>
                                                     {lr.status === "Approved" && <CheckCircle2 size={12} />}
                                                     {lr.status === "Pending" && <Clock size={12} />}
                                                     {lr.status === "Rejected" && <AlertTriangle size={12} />}

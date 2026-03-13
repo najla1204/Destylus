@@ -30,24 +30,24 @@ export default function MonthlyAttendancePage() {
 
             {/* Stats Summary */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Present</span>
-                    <div className="text-4xl font-bold text-white leading-none">24 Days</div>
+                    <div className="text-4xl font-bold text-foreground leading-none">24 Days</div>
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-success">Attendance</span>
                 </div>
-                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Absent</span>
-                    <div className="text-4xl font-bold text-white leading-none">01 Day</div>
+                    <div className="text-4xl font-bold text-foreground leading-none">01 Day</div>
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-red-500">Missed</span>
                 </div>
-                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Leaves</span>
-                    <div className="text-4xl font-bold text-white leading-none">02 Days</div>
+                    <div className="text-4xl font-bold text-foreground leading-none">02 Days</div>
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-yellow-500">Scheduled</span>
                 </div>
-                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Overtime</span>
-                    <div className="text-4xl font-bold text-white leading-none">12 Hrs</div>
+                    <div className="text-4xl font-bold text-foreground leading-none">12 Hrs</div>
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-400">Extra Time</span>
                 </div>
             </div>
@@ -72,7 +72,7 @@ export default function MonthlyAttendancePage() {
                             <div key={d} className={`h-24 p-2 rounded-lg border border-gray-700 flex flex-col justify-between ${isWeekend ? 'bg-surface/30' : 'bg-surface'}`}>
                                 <span className={`text-right font-medium ${isWeekend ? 'text-red-400' : 'text-foreground'}`}>{d}</span>
                                 {status === "Present" && (
-                                    <span className="text-xs bg-green-500/10 text-green-500 px-1 py-0.5 rounded text-center">9h 00m</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950 px-1 py-0.5 rounded-xl text-center">9h 00m</span>
                                 )}
                                 {status === "Off" && (
                                     <span className="text-xs text-muted text-center">-</span>

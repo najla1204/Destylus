@@ -37,7 +37,7 @@ h1, h2, h3, h4, .font-serif {
 
 /* Premium Utilities */
 .premium-card {
-  @apply bg-panel border border-white/5 rounded-2xl shadow-premium relative overflow-hidden;
+  @apply bg-panel border border-gray-200 dark:border-white/5 rounded-2xl shadow-premium relative overflow-hidden;
 }
 
 .premium-card::before {

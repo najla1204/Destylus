@@ -266,24 +266,24 @@ export default function ProjectManagersPage() {
         <div className="space-y-6">
             {/* Stats Cards */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-2">
-                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Total Managers</span>
-                    <div className="text-4xl font-bold text-white leading-none">{pms.length}</div>
+                    <div className="text-4xl font-bold text-foreground leading-none">{pms.length}</div>
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-primary">Registered project managers</span>
                 </div>
-                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Active Managers</span>
-                    <div className="text-4xl font-bold text-white leading-none">{pms.filter(pm => pm.status === "Active").length}</div>
+                    <div className="text-4xl font-bold text-foreground leading-none">{pms.filter(pm => pm.status === "Active").length}</div>
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-green-500">Currently active</span>
                 </div>
-                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Sites Assigned</span>
-                    <div className="text-4xl font-bold text-white leading-none">{new Set(pms.map(pm => pm.site).filter(Boolean)).size}</div>
+                    <div className="text-4xl font-bold text-foreground leading-none">{new Set(pms.map(pm => pm.site).filter(Boolean)).size}</div>
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-500">Unique sites with PMs</span>
                 </div>
-                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Engineers Managed</span>
-                    <div className="text-4xl font-bold text-white leading-none">{allEngineers.filter(eng => pms.some(pm => pm.site && pm.site === eng.site)).length}</div>
+                    <div className="text-4xl font-bold text-foreground leading-none">{allEngineers.filter(eng => pms.some(pm => pm.site && pm.site === eng.site)).length}</div>
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-purple-500">Under PM supervision</span>
                 </div>
             </div>
@@ -410,10 +410,10 @@ export default function ProjectManagersPage() {
                     <table className="w-full text-left text-sm">
                         <thead className="bg-surface text-muted border-b border-gray-700">
                             <tr>
-                                <th className="px-4 py-3 font-semibold uppercase tracking-wider">Manager</th>
-                                <th className="px-4 py-3 font-semibold uppercase tracking-wider text-center">Sites Allocated</th>
-                                <th className="px-4 py-3 font-semibold uppercase tracking-wider text-center">Site Engineers</th>
-                                <th className="px-4 py-3 font-semibold uppercase tracking-wider text-center">Actions</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Manager</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-center">Sites Allocated</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-center">Site Engineers</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-700">
@@ -446,7 +446,7 @@ export default function ProjectManagersPage() {
                                         <td className="px-4 py-4 text-center">
                                             {pm.site ? (
                                                 <div className="flex flex-col items-center gap-1">
-                                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary border border-primary/20 px-2.5 py-1 text-xs font-semibold">
+                                                    <span className="inline-flex items-center gap-1.5 rounded-xl bg-zinc-200 text-zinc-950 border border-zinc-200/50 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest">
                                                         1
                                                     </span>
                                                     <span className="text-xs text-muted truncate max-w-[120px]" title={pm.site}>{pm.site}</span>
@@ -459,7 +459,7 @@ export default function ProjectManagersPage() {
                                             {(() => {
                                                 const count = pm.site ? allEngineers.filter(eng => eng.site === pm.site).length : 0;
                                                 return count > 0 ? (
-                                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 text-xs font-semibold">
+                                                    <span className="inline-flex items-center gap-1.5 rounded-xl bg-zinc-200 text-zinc-950 border border-zinc-200/50 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest">
                                                         {count}
                                                     </span>
                                                 ) : (

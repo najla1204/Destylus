@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, MapPin, Users, Package, Calendar, HardHat, FileText, Plus, X, AlertTriangle, IndianRupee, Phone, UserCheck, Wallet, ArrowUpRight, ArrowDownRight, ChevronDown, ChevronRight, Clock, Filter, Check, Trash2, Camera, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, MapPin, Users, Package, Calendar, HardHat, FileText, Plus, X, AlertTriangle, IndianRupee, Phone, UserCheck, Wallet, ArrowUpRight, ArrowDownRight, ChevronDown, ChevronRight, Clock, Filter, Check, Trash2, Camera, CheckCircle, XCircle, Search, Layers } from "lucide-react";
 import { useEffect, useState, use, useRef, Fragment } from "react";
 import { useRouter } from "next/navigation";
 
@@ -69,11 +69,14 @@ interface Issue {
     _id: string;
     title: string;
     description?: string;
-    status: "Open" | "In Progress" | "Resolved";
+    status: "Open" | "In Progress" | "Resolved" | "Pending";
     priority: "Low" | "Medium" | "High" | "Critical";
     raisedBy?: string;
     createdAt: string;
     sentTo?: string[];
+    statusChangedBy?: string;
+    statusChangedByRole?: string;
+    resolvedBy?: string;
 }
 
 interface PettyCashTransaction {
@@ -129,7 +132,7 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
 
     const [site, setSite] = useState<SiteData | null>(null);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<"Labour Attendance" | "Materials" | "Issues" | "Petty Cash" | "Staff Attendance" | "Report">("Labour Attendance");
+    const [activeTab, setActiveTab] = useState<"Labour Attendance" | "Materials" | "Issues" | "Petty Cash" | "Staff Attendance" | "Report">("Materials");
     const [materialsSubTab, setMaterialsSubTab] = useState<"Available" | "Refunds">("Available");
     const [reportSubTab, setReportSubTab] = useState<"Labour" | "Material" | "Petty Cash">("Labour");
     const [userRole, setUserRole] = useState<string>("");
@@ -240,9 +243,23 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
         setUserName(name);
     }, []);
 
-    const isSiteEngineer = userRole === "Engineer" || userRole === "engineer" || userRole === "site_engineer" || userRole === "Site Engineer";
-    const isProjectManager = userRole === "Project Manager" || userRole === "project_manager";
-    const isHRManager = userRole === "HR Manager" || userRole === "hr";
+    const isSiteEngineer = userRole.toLowerCase().includes("engineer");
+    const isProjectManager = userRole.toLowerCase().includes("manager") || userRole.toLowerCase().includes("admin");
+    const isHRManager = userRole.toLowerCase().includes("hr") || userRole.toLowerCase().includes("admin");
+    const isAccountant = userRole.toLowerCase().includes("accountant") || userRole.toLowerCase().includes("admin");
+
+    // Staff Attendance calculations
+    const allStaffRecords = [...engineerAttendance, ...labourAttendance];
+    const staffApprovedCount = allStaffRecords.filter(r => r.approvalStatus === 'approved').length;
+    const staffPendingCount = allStaffRecords.filter(r => r.approvalStatus === 'pending').length;
+    const staffRejectedCount = allStaffRecords.filter(r => r.approvalStatus === 'rejected').length;
+
+    const filteredStaffEngineers = attendanceStatusFilter === 'all'
+        ? engineerAttendance
+        : engineerAttendance.filter(r => r.approvalStatus === attendanceStatusFilter);
+    const filteredStaffLabours = attendanceStatusFilter === 'all'
+        ? labourAttendance
+        : labourAttendance.filter(r => r.approvalStatus === attendanceStatusFilter);
 
     // Fetch site data
     useEffect(() => {
@@ -302,53 +319,67 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                 if (activeTab === "Labour Attendance") {
                     // Fetch aggregate logs
                     const aggRes = await fetch(`/api/sites/${siteId}/labours?type=aggregate`);
-                    const aggData = await aggRes.json();
-                    setAggregateLabourLogs(aggData);
+                    if (aggRes.ok) {
+                        const aggData = await aggRes.json();
+                        setAggregateLabourLogs(Array.isArray(aggData) ? aggData : []);
+                    }
                     // Also fetch individual labours for backward compatibility
                     const res = await fetch(`/api/sites/${siteId}/labours`);
-                    const data = await res.json();
-                    setLabours(data);
+                    if (res.ok) {
+                        const data = await res.json();
+                        setLabours(Array.isArray(data) ? data : []);
+                    }
                 } else if (activeTab === "Report") {
                     // Fetch aggregate logs for report
                     const aggRes = await fetch(`/api/sites/${siteId}/labours?type=aggregate`);
-                    const aggData = await aggRes.json();
-                    setAggregateLabourLogs(aggData);
+                    if (aggRes.ok) {
+                        const aggData = await aggRes.json();
+                        setAggregateLabourLogs(Array.isArray(aggData) ? aggData : []);
+                    }
                     
                     // Fetch materials for material report
                     const res = await fetch(`/api/sites/${siteId}/materials`);
-                    const data = await res.json();
-                    setMaterials(data);
+                    if (res.ok) {
+                        const data = await res.json();
+                        setMaterials(Array.isArray(data) ? data : []);
+                    }
                 } else if (activeTab === "Materials") {
                     const res = await fetch(`/api/sites/${siteId}/materials`);
-                    const data = await res.json();
-                    setMaterials(data);
+                    if (res.ok) {
+                        const data = await res.json();
+                        setMaterials(Array.isArray(data) ? data : []);
+                    }
                     
                     // Also fetch refund requests
                     const refRes = await fetch(`/api/sites/${siteId}/stock-refund-requests`);
                     if (refRes.ok) {
                         const refData = await refRes.json();
-                        setRefundRequests(refData);
+                        setRefundRequests(Array.isArray(refData) ? refData : []);
                     }
                 } else if (activeTab === "Issues") {
                     const res = await fetch(`/api/sites/${siteId}/issues`);
-                    const data = await res.json();
-                    setIssues(data);
+                    if (res.ok) {
+                        const data = await res.json();
+                        setIssues(Array.isArray(data) ? data : []);
+                    }
                 } else if (activeTab === "Petty Cash") {
                     const res = await fetch(`/api/sites/${siteId}/petty-cash`);
-                    const data = await res.json();
-                    if (data.transactions) setPettyCashTransactions(data.transactions);
-                    if (data.summary) setPettyCashSummary(data.summary);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.transactions) setPettyCashTransactions(Array.isArray(data.transactions) ? data.transactions : []);
+                        if (data.summary) setPettyCashSummary(data.summary);
+                    }
                 } else if (activeTab === "Staff Attendance") {
                     // Always try to fetch from API, but be aware it might fail if the endpoint isn't fully set up yet.
                     const res = await fetch(`/api/sites/${siteId}/attendance`);
                     if (res.ok) {
                         const data = await res.json();
-                        setEngineerAttendance(data.engineerRecords || []);
-                        setLabourAttendance(data.labourRecords || []);
+                        setEngineerAttendance(Array.isArray(data.engineerRecords) ? data.engineerRecords : []);
+                        setLabourAttendance(Array.isArray(data.labourRecords) ? data.labourRecords : []);
                         
                         // Set today's labour attendance
                         const today = new Date().toISOString().split('T')[0];
-                        const todayRecords = (data.labourRecords || []).filter((r: any) => 
+                        const todayRecords = (Array.isArray(data.labourRecords) ? data.labourRecords : []).filter((r: any) => 
                             r.checkInTime.startsWith(today)
                         );
                         setTodayLabourAttendance(todayRecords);
@@ -569,7 +600,8 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
             });
 
             if (res.ok) {
-                setEngineerAttendance(engineerAttendance.filter(a => a._id !== id));
+                setEngineerAttendance(prev => prev.filter(a => a._id !== id));
+                setLabourAttendance(prev => prev.filter(a => a._id !== id));
             } else {
                 const err = await res.json();
                 alert(err.error || 'Failed to delete attendance record');
@@ -585,15 +617,21 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
     const handleConfirmAttendance = async (id: string, action: 'approve' | 'reject') => {
         if (action === 'reject' && !confirm("Are you sure you want to reject this attendance record?")) return;
         setIsSubmittingAttendance(true);
+        const apiStatus = action === 'approve' ? 'approved' : 'rejected';
         try {
             const res = await fetch(`/api/attendance/${id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: action })
+                body: JSON.stringify({ 
+                    status: apiStatus,
+                    rejectionReason: action === 'reject' ? 'Rejected by Manager' : undefined 
+                })
             });
             if (res.ok) {
-                const updated = await res.json();
-                setEngineerAttendance(prev => prev.map(a => a._id === id ? { ...a, approvalStatus: action === 'approve' ? 'approved' : 'rejected' } : a));
+                const updated = (await res.json()).attendance;
+                // Update both states since we don't know which one it belongs to easily or it could be in either
+                setEngineerAttendance(prev => prev.map(a => a._id === id ? updated : a));
+                setLabourAttendance(prev => prev.map(a => a._id === id ? updated : a));
             } else {
                 const err = await res.json();
                 alert(err.error || `Failed to ${action} attendance`);
@@ -1020,18 +1058,43 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
         }
     };
 
-    const handleUpdateIssueStatus = async (issueId: string, status: string) => {
+    const handleUpdateIssueStatus = async (issueId: string, status: Issue['status']) => {
+        // Optimistic update
+        const previousIssues = [...issues];
+        const statusChangedBy = userName;
+        const statusChangedByRole = userRole;
+        const resolvedBy = status === 'Resolved' ? userName : undefined;
+
+        setIssues(prev => prev.map(i => i._id === issueId ? { 
+            ...i, 
+            status,
+            statusChangedBy,
+            statusChangedByRole,
+            ...(resolvedBy ? { resolvedBy } : {})
+        } : i));
+
         try {
             const res = await fetch(`/api/issues/${issueId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status })
+                body: JSON.stringify({ 
+                    status,
+                    statusChangedBy,
+                    statusChangedByRole,
+                    resolvedBy
+                })
             });
-            if (res.ok) {
+            if (!res.ok) {
+                // Revert if failed
+                setIssues(previousIssues);
+                console.error("API update failed");
+            } else {
                 const updated = await res.json();
                 setIssues(prev => prev.map(i => i._id === issueId ? updated : i));
             }
         } catch (err) {
+            // Revert if error
+            setIssues(previousIssues);
             console.error("Failed to update issue status:", err);
         }
     };
@@ -1064,7 +1127,8 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
 
             {/* Sub-Navigation Tabs */}
             <div className="flex items-center gap-2 mt-4 overflow-x-auto py-2">
-                {(["Labour Attendance", "Materials", "Issues", "Petty Cash", "Staff Attendance", "Report"] as const).map((tab) => (
+                {(["Labour Attendance", "Materials", "Issues", "Petty Cash", "Staff Attendance", "Report"] as const)
+                    .map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
@@ -1091,23 +1155,24 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                 <div className="flex flex-col gap-4">
                     {/* Aggregate Summary Cards */}
                     {(() => {
-                        const totalWorkers = aggregateLabourLogs.reduce((s, l) => s + l.skilledCount + l.unskilledCount, 0);
-                        const totalSupervisors = aggregateLabourLogs.reduce((s, l) => s + l.supervisorCount, 0);
+                        const logs = Array.isArray(aggregateLabourLogs) ? aggregateLabourLogs : [];
+                        const totalWorkers = logs.reduce((s, l) => s + (Number(l.skilledCount) || 0) + (Number(l.unskilledCount) || 0), 0);
+                        const totalSupervisors = logs.reduce((s, l) => s + (Number(l.supervisorCount) || 0), 0);
                         return (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-                                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                                <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Total Entries</span>
-                                    <div className="text-4xl font-bold text-white leading-none">{aggregateLabourLogs.length}</div>
+                                    <div className="text-4xl font-bold text-foreground dark:text-white leading-none">{Array.isArray(aggregateLabourLogs) ? aggregateLabourLogs.length : 0}</div>
                                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-primary">All Logs</span>
                                 </div>
-                                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                                <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Workers</span>
-                                    <div className="text-4xl font-bold text-white leading-none">{totalWorkers}</div>
+                                    <div className="text-4xl font-bold text-foreground dark:text-white leading-none">{totalWorkers}</div>
                                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-500">Total Workers</span>
                                 </div>
-                                <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                                <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Supervisors</span>
-                                    <div className="text-4xl font-bold text-white leading-none">{totalSupervisors}</div>
+                                    <div className="text-4xl font-bold text-foreground dark:text-white leading-none">{totalSupervisors}</div>
                                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-primary">Total Supervisors</span>
                                 </div>
                             </div>
@@ -1115,7 +1180,7 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                     })()}
 
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-8 mb-4">
-                        <h2 className="text-lg font-bold text-foreground uppercase tracking-wider">LABOUR LOGS ({aggregateLabourLogs.length})</h2>
+                        <h2 className="text-lg font-bold text-foreground uppercase tracking-wider">LABOUR LOGS ({Array.isArray(aggregateLabourLogs) ? aggregateLabourLogs.length : 0})</h2>
                         {(isSiteEngineer || isProjectManager) && (
                             <div className="relative group mt-3 sm:mt-0">
                                 <button
@@ -1153,10 +1218,10 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-700">
-                                {aggregateLabourLogs.length === 0 ? (
+                                {Array.isArray(aggregateLabourLogs) && aggregateLabourLogs.length === 0 ? (
                                     <tr><td colSpan={7} className="px-6 py-8 text-center text-muted">No labour attendance logged for this site yet.</td></tr>
                                 ) : (
-                                    aggregateLabourLogs.map((log) => (
+                                    (Array.isArray(aggregateLabourLogs) ? aggregateLabourLogs : []).map((log) => (
                                         <Fragment key={log._id}>
                                             <tr 
                                                 className="hover:bg-surface/50 transition-colors"
@@ -1303,34 +1368,34 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                     </div>
 
                     {reportSubTab === "Labour" ? (
-                        <div className="bg-white border text-black rounded-xl p-6 shadow-sm font-serif">
-                            <h2 className="text-2xl font-bold text-center mb-2 border-b-2 border-black pb-2 uppercase tracking-wide">Labour Payment Details</h2>
+                        <div className="bg-white dark:bg-[#0B0D11] border border-black dark:border-gray-800 text-black dark:text-white rounded-xl p-6 shadow-sm font-serif print:bg-white print:text-black">
+                            <h2 className="text-2xl font-bold text-center mb-2 border-b-2 border-black dark:border-gray-800 print:border-black dark:border-gray-800 pb-2 uppercase tracking-wide print:border-black text-black dark:text-white">Labour Payment Details</h2>
                             <div className="text-center font-bold uppercase mb-6 text-sm tracking-wider">
                                 Site: {site.name} | Engineer: {userName}
                             </div>
                             
                             <div className="flex items-center gap-4 mb-6">
                                 <div className="flex flex-col gap-1">
-                                    <label className="text-xs text-gray-600 uppercase tracking-wider font-semibold">From</label>
+                                    <label className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider font-semibold">From</label>
                                     <input
                                         type="date"
                                         value={reportFromDate}
                                         onChange={e => setReportFromDate(e.target.value)}
-                                        className="rounded border border-gray-400 bg-gray-50 px-3 py-1 text-sm text-black focus:border-black focus:outline-none font-sans"
+                                        className="rounded border border-gray-400 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-1 text-sm text-black dark:text-white focus:border-black dark:focus:border-primary focus:outline-none font-sans"
                                     />
                                 </div>
                                 <div className="flex flex-col gap-1">
-                                    <label className="text-xs text-gray-600 uppercase tracking-wider font-semibold">To</label>
+                                    <label className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider font-semibold">To</label>
                                     <input
                                         type="date"
                                         value={reportToDate}
                                         onChange={e => setReportToDate(e.target.value)}
-                                        className="rounded border border-gray-400 bg-gray-50 px-3 py-1 text-sm text-black focus:border-black focus:outline-none font-sans"
+                                        className="rounded border border-gray-400 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-1 text-sm text-black dark:text-white focus:border-black dark:focus:border-primary focus:outline-none font-sans"
                                     />
                                 </div>
                             </div>
                             
-                            <div className="overflow-x-auto border-2 border-black w-full">
+                            <div className="overflow-x-auto border-2 border-black dark:border-gray-800 w-full print:border-black">
                                 {(() => {
                                     const start = new Date(reportFromDate);
                                     const end = new Date(reportToDate);
@@ -1347,7 +1412,7 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                                         dateLabels.push(new Date(d).toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase());
                                     }
 
-                                    const logsInRange = aggregateLabourLogs.filter(l => {
+                                    const logsInRange = (Array.isArray(aggregateLabourLogs) ? aggregateLabourLogs : []).filter(l => {
                                         const lDate = l.date.split('T')[0];
                                         return lDate >= reportFromDate && lDate <= reportToDate;
                                     });
@@ -1362,24 +1427,24 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
 
                                     return (
                                         <table className="w-full text-center border-collapse text-sm">
-                                            <thead className="font-bold border-b-2 border-black tracking-wide">
+                                            <thead className="font-bold border-b-2 border-black dark:border-gray-800 print:border-black tracking-wide">
                                                 <tr>
-                                                    <th className="border-r-2 border-black px-4 py-3 uppercase w-40">Worker Type</th>
+                                                    <th className="border-r-2 border-black dark:border-gray-800 print:border-black px-4 py-3 uppercase w-40">Worker Type</th>
                                                     {dateLabels.map((dl, i) => (
-                                                        <th key={i} className="border-r-2 border-black px-2 py-3 uppercase" title={dates[i]}>
+                                                        <th key={i} className="border-r-2 border-black dark:border-gray-800 print:border-black px-2 py-3 uppercase" title={dates[i]}>
                                                             {dl}
                                                         </th>
                                                     ))}
-                                                    <th className="border-r-2 border-black px-4 py-3 uppercase">T-Days</th>
-                                                    <th className="border-r-2 border-black px-4 py-3 uppercase w-28">Rate (₹)</th>
+                                                    <th className="border-r-2 border-black dark:border-gray-800 print:border-black px-4 py-3 uppercase">T-Days</th>
+                                                    <th className="border-r-2 border-black dark:border-gray-800 print:border-black px-4 py-3 uppercase w-28">Rate (₹)</th>
                                                     <th className="border-black px-4 py-3 uppercase">T-Amount</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {workerTypes.length === 0 ? (
                                                     <tr>
-                                                        <td className="border-r-2 border-b-2 border-black px-4 py-6"></td>
-                                                        <td colSpan={dateLabels.length + 3} className="border-b-2 border-black px-4 py-6 font-bold uppercase tracking-widest text-gray-500">No labour data found for selected period</td>
+                                                        <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-6"></td>
+                                                        <td colSpan={dateLabels.length + 3} className="border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-6 font-bold uppercase tracking-widest text-gray-500">No labour data found for selected period</td>
                                                     </tr>
                                                 ) : (
                                                     workerTypes.map(wt => {
@@ -1396,17 +1461,17 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                                                         grandTotal += totalAmount;
 
                                                         return (
-                                                            <tr key={wt}>
-                                                                <td className="border-r-2 border-b-2 border-black px-4 py-3 font-semibold uppercase">{wt}</td>
+                                                            <tr key={wt} className="dark:hover:bg-gray-900/30">
+                                                                <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-3 font-semibold uppercase">{wt}</td>
                                                                 {counts.map((c, i) => (
-                                                                    <td key={i} className="border-r-2 border-b-2 border-black px-2 py-3 font-semibold">
+                                                                    <td key={i} className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-2 py-3 font-semibold">
                                                                         {c > 0 ? c : '—'}
                                                                     </td>
                                                                 ))}
-                                                                <td className="border-r-2 border-b-2 border-black px-4 py-3 font-bold text-blue-600">
+                                                                <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-3 font-bold text-blue-600 dark:text-blue-400">
                                                                     {totalDays}
                                                                 </td>
-                                                                <td className="border-r-2 border-b-2 border-black px-2 py-2">
+                                                                <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-2 py-2">
                                                                     <input
                                                                         type="number"
                                                                         min="0"
@@ -1416,7 +1481,7 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                                                                         placeholder="0"
                                                                     />
                                                                 </td>
-                                                                <td className="border-b-2 border-black px-4 py-3 font-bold text-red-600">
+                                                                <td className="border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-3 font-bold text-red-600 dark:text-red-400">
                                                                     {totalAmount > 0 ? totalAmount.toLocaleString('en-IN') : '—'}
                                                                 </td>
                                                             </tr>
@@ -1426,24 +1491,24 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                                                 {/* Add empty rows like a printed register */}
                                                 {Array.from({ length: Math.max(0, 5 - workerTypes.length) }).map((_, i) => (
                                                     <tr key={`empty-${i}`}>
-                                                        <td className="border-r-2 border-b-2 border-black px-4 py-6"></td>
+                                                        <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-6"></td>
                                                         {dateLabels.map((_, i) => (
-                                                            <td key={i} className="border-r-2 border-b-2 border-black px-2 py-6"></td>
+                                                            <td key={i} className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-2 py-6"></td>
                                                         ))}
-                                                        <td className="border-r-2 border-b-2 border-black px-4 py-6"></td>
-                                                        <td className="border-r-2 border-b-2 border-black px-4 py-6"></td>
-                                                        <td className="border-b-2 border-black px-4 py-6"></td>
+                                                        <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-6"></td>
+                                                        <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-6"></td>
+                                                        <td className="border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-6"></td>
                                                     </tr>
                                                 ))}
                                             </tbody>
                                             {workerTypes.length > 0 && (
                                                 <tfoot>
                                                     <tr>
-                                                        <td className="border-b-2 border-black"></td>
-                                                        <td colSpan={dateLabels.length + 2} className="border-b-2 border-black px-4 py-4 text-right uppercase tracking-wider font-bold">
+                                                        <td className="border-b-2 border-black dark:border-gray-800 print:border-black"></td>
+                                                        <td colSpan={dateLabels.length + 2} className="border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-4 text-right uppercase tracking-wider font-bold">
                                                             Total Amount
                                                         </td>
-                                                        <td className="border-b-2 border-black px-4 py-4 font-bold text-lg text-red-600 border-l-2">
+                                                        <td className="border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-4 font-bold text-lg text-red-600 dark:text-red-400 border-l-2">
                                                             ₹ {grandTotal.toLocaleString('en-IN')}
                                                         </td>
                                                     </tr>
@@ -1455,9 +1520,9 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                             </div>
                         </div>
                     ) : reportSubTab === "Material" ? (
-                        <div className="bg-white border text-black rounded-xl p-6 shadow-sm font-serif">
+                        <div className="bg-white dark:bg-[#0B0D11] border border-black dark:border-gray-800 text-black dark:text-white rounded-xl p-6 shadow-sm font-serif print:bg-white print:text-black">
                             {/* Materials Report Layout exactly like Image 2 */}
-                            <h2 className="text-2xl font-bold text-center mb-2 border-b-2 border-black pb-2 uppercase tracking-wide">Received Material Details</h2>
+                            <h2 className="text-2xl font-bold text-center mb-2 border-b-2 border-black dark:border-gray-800 print:border-black pb-2 uppercase tracking-wide">Received Material Details</h2>
                             <div className="text-center font-bold uppercase mb-6 text-sm tracking-wider">
                                 Site: {site.name} | Engineer: {userName}
                             </div>
@@ -1465,35 +1530,35 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                             {/* Filter Section for Material Report - Optional context but helpful */}
                             <div className="flex items-center gap-4 mb-6">
                                 <div className="flex flex-col gap-1">
-                                    <label className="text-xs text-gray-600 uppercase tracking-wider font-semibold">From</label>
+                                    <label className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider font-semibold">From</label>
                                     <input
                                         type="date"
                                         value={reportFromDate}
                                         onChange={e => setReportFromDate(e.target.value)}
-                                        className="rounded border border-gray-400 bg-gray-50 px-3 py-1 text-sm text-black focus:border-black focus:outline-none font-sans"
+                                        className="rounded border border-gray-400 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-1 text-sm text-black dark:text-white focus:border-black dark:focus:border-primary focus:outline-none font-sans"
                                     />
                                 </div>
                                 <div className="flex flex-col gap-1">
-                                    <label className="text-xs text-gray-600 uppercase tracking-wider font-semibold">To</label>
+                                    <label className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider font-semibold">To</label>
                                     <input
                                         type="date"
                                         value={reportToDate}
                                         onChange={e => setReportToDate(e.target.value)}
-                                        className="rounded border border-gray-400 bg-gray-50 px-3 py-1 text-sm text-black focus:border-black focus:outline-none font-sans"
+                                        className="rounded border border-gray-400 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-1 text-sm text-black dark:text-white focus:border-black dark:focus:border-primary focus:outline-none font-sans"
                                     />
                                 </div>
                             </div>
                             
 
                             {/* Second Table: Received Logs */}
-                            <div className="overflow-x-auto border-2 border-black w-full">
+                            <div className="overflow-x-auto border-2 border-black dark:border-gray-800 w-full print:border-black">
                                 <table className="w-full text-center border-collapse text-sm">
-                                    <thead className="font-bold border-b-2 border-black tracking-wide">
+                                    <thead className="font-bold border-b-2 border-black dark:border-gray-800 print:border-black tracking-wide">
                                         <tr>
-                                            <th className="border-r-2 border-black px-4 py-3 uppercase">Date</th>
-                                            <th className="border-r-2 border-black px-4 py-3 uppercase">Material</th>
-                                            <th className="border-r-2 border-black px-4 py-3 uppercase">Lorry No.</th>
-                                            <th className="border-r-2 border-black px-4 py-3 uppercase">Lorry Measurement</th>
+                                            <th className="border-r-2 border-black dark:border-gray-800 print:border-black px-4 py-3 uppercase">Date</th>
+                                            <th className="border-r-2 border-black dark:border-gray-800 print:border-black px-4 py-3 uppercase">Material</th>
+                                            <th className="border-r-2 border-black dark:border-gray-800 print:border-black px-4 py-3 uppercase">Lorry No.</th>
+                                            <th className="border-r-2 border-black dark:border-gray-800 print:border-black px-4 py-3 uppercase">Lorry Measurement</th>
                                             <th className="border-black px-4 py-3 uppercase">Total Quantity</th>
                                         </tr>
                                     </thead>
@@ -1503,8 +1568,8 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                                             return mDate >= reportFromDate && mDate <= reportToDate;
                                         }).length === 0 ? (
                                             <tr>
-                                                <td className="border-r-2 border-b-2 border-black px-4 py-6 font-bold uppercase tracking-widest text-gray-500"></td>
-                                                <td colSpan={4} className="border-b-2 border-black px-4 py-6 text-gray-500 font-bold tracking-widest uppercase">No materials found for selected period</td>
+                                                <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-6 font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400"></td>
+                                                <td colSpan={4} className="border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-6 text-gray-500 dark:text-gray-400 font-bold tracking-widest uppercase">No materials found for selected period</td>
                                             </tr>
                                         ) : (
                                             materials.filter(m => {
@@ -1512,11 +1577,11 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                                                 return mDate >= reportFromDate && mDate <= reportToDate;
                                             }).map((m) => (
                                                 <tr key={m._id}>
-                                                    <td className="border-r-2 border-b-2 border-black px-4 py-3 font-semibold">{new Date(m.createdAt).toLocaleDateString()}</td>
-                                                    <td className="border-r-2 border-b-2 border-black px-4 py-3 font-semibold uppercase">{m.item}</td>
-                                                    <td className="border-r-2 border-b-2 border-black px-4 py-3 font-semibold uppercase">{m.lorryNo || '—'}</td>
-                                                    <td className="border-r-2 border-b-2 border-black px-4 py-3 font-semibold uppercase">{m.lorryMeasurements || '—'}</td>
-                                                    <td className="border-b-2 border-black px-4 py-3 font-bold">{m.quantity} {m.unit}</td>
+                                                    <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-3 font-semibold">{new Date(m.createdAt).toLocaleDateString()}</td>
+                                                    <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-3 font-semibold uppercase">{m.item}</td>
+                                                    <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-3 font-semibold uppercase">{m.lorryNo || '—'}</td>
+                                                    <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-3 font-semibold uppercase">{m.lorryMeasurements || '—'}</td>
+                                                    <td className="border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-3 font-bold">{m.quantity} {m.unit}</td>
                                                 </tr>
                                             ))
                                         )}
@@ -1526,11 +1591,11 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                                             return mDate >= reportFromDate && mDate <= reportToDate;
                                         }).length) }).map((_, i) => (
                                             <tr key={`empty-${i}`}>
-                                                <td className="border-r-2 border-b-2 border-black px-4 py-6"></td>
-                                                <td className="border-r-2 border-b-2 border-black px-4 py-6"></td>
-                                                <td className="border-r-2 border-b-2 border-black px-4 py-6"></td>
-                                                <td className="border-r-2 border-b-2 border-black px-4 py-6"></td>
-                                                <td className="border-b-2 border-black px-4 py-6"></td>
+                                                <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-6"></td>
+                                                <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-6"></td>
+                                                <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-6"></td>
+                                                <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-6"></td>
+                                                <td className="border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-6"></td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -1538,41 +1603,41 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                             </div>
                         </div>
                     ) : reportSubTab === "Petty Cash" ? (
-                        <div className="bg-white border text-black rounded-xl p-6 shadow-sm font-serif">
-                            <h2 className="text-2xl font-bold text-center mb-2 border-b-2 border-black pb-2 uppercase tracking-wide">Petty Cash Transactions</h2>
+                        <div className="bg-white dark:bg-[#0B0D11] border border-black dark:border-gray-800 text-black dark:text-white rounded-xl p-6 shadow-sm font-serif print:bg-white print:text-black">
+                            <h2 className="text-2xl font-bold text-center mb-2 border-b-2 border-black dark:border-gray-800 print:border-black pb-2 uppercase tracking-wide">Petty Cash Transactions</h2>
                             <div className="text-center font-bold uppercase mb-6 text-sm tracking-wider">
                                 Site: {site.name} | Engineer: {userName}
                             </div>
                             
                             <div className="flex items-center gap-4 mb-6 print:hidden">
                                 <div className="flex flex-col gap-1">
-                                    <label className="text-xs text-gray-600 uppercase tracking-wider font-semibold">From</label>
+                                    <label className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider font-semibold">From</label>
                                     <input
                                         type="date"
                                         value={reportFromDate}
                                         onChange={e => setReportFromDate(e.target.value)}
-                                        className="rounded border border-gray-400 bg-gray-50 px-3 py-1 text-sm text-black focus:border-black focus:outline-none font-sans"
+                                        className="rounded border border-gray-400 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-1 text-sm text-black dark:text-white focus:border-black dark:focus:border-primary focus:outline-none font-sans"
                                     />
                                 </div>
                                 <div className="flex flex-col gap-1">
-                                    <label className="text-xs text-gray-600 uppercase tracking-wider font-semibold">To</label>
+                                    <label className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider font-semibold">To</label>
                                     <input
                                         type="date"
                                         value={reportToDate}
                                         onChange={e => setReportToDate(e.target.value)}
-                                        className="rounded border border-gray-400 bg-gray-50 px-3 py-1 text-sm text-black focus:border-black focus:outline-none font-sans"
+                                        className="rounded border border-gray-400 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-1 text-sm text-black dark:text-white focus:border-black dark:focus:border-primary focus:outline-none font-sans"
                                     />
                                 </div>
                             </div>
 
-                            <div className="overflow-x-auto border-2 border-black w-full">
+                            <div className="overflow-x-auto border-2 border-black dark:border-gray-800 w-full print:border-black">
                                 <table className="w-full text-center border-collapse text-sm">
-                                    <thead className="font-bold border-b-2 border-black tracking-wide">
+                                    <thead className="font-bold border-b-2 border-black dark:border-gray-800 print:border-black tracking-wide">
                                         <tr>
-                                            <th className="border-r-2 border-black px-4 py-3 uppercase">Date</th>
-                                            <th className="border-r-2 border-black px-4 py-3 uppercase">Title</th>
-                                            <th className="border-r-2 border-black px-4 py-3 uppercase">Type</th>
-                                            <th className="border-r-2 border-black px-4 py-3 uppercase">Logged By</th>
+                                            <th className="border-r-2 border-black dark:border-gray-800 print:border-black px-4 py-3 uppercase">Date</th>
+                                            <th className="border-r-2 border-black dark:border-gray-800 print:border-black px-4 py-3 uppercase">Title</th>
+                                            <th className="border-r-2 border-black dark:border-gray-800 print:border-black px-4 py-3 uppercase">Type</th>
+                                            <th className="border-r-2 border-black dark:border-gray-800 print:border-black px-4 py-3 uppercase">Logged By</th>
                                             <th className="border-black px-4 py-3 uppercase">Amount</th>
                                         </tr>
                                     </thead>
@@ -1582,8 +1647,8 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                                             return pDate >= reportFromDate && pDate <= reportToDate;
                                         }).length === 0 ? (
                                             <tr>
-                                                <td className="border-r-2 border-b-2 border-black px-4 py-6 font-bold uppercase tracking-widest text-gray-500"></td>
-                                                <td colSpan={4} className="border-b-2 border-black px-4 py-6 text-gray-500 font-bold tracking-widest uppercase">No transactions found for selected period</td>
+                                                <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-6 font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400"></td>
+                                                <td colSpan={4} className="border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-6 text-gray-500 dark:text-gray-400 font-bold tracking-widest uppercase">No transactions found for selected period</td>
                                             </tr>
                                         ) : (
                                             pettyCashTransactions.filter(p => {
@@ -1591,11 +1656,11 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                                                 return pDate >= reportFromDate && pDate <= reportToDate;
                                             }).map((p) => (
                                                 <tr key={p._id}>
-                                                    <td className="border-r-2 border-b-2 border-black px-4 py-3 font-semibold">{new Date(p.date).toLocaleDateString()}</td>
-                                                    <td className="border-r-2 border-b-2 border-black px-4 py-3 font-semibold uppercase">{p.title}</td>
-                                                    <td className="border-r-2 border-b-2 border-black px-4 py-3 font-semibold uppercase">{p.type}</td>
-                                                    <td className="border-r-2 border-b-2 border-black px-4 py-3 font-semibold uppercase">{p.loggedBy}</td>
-                                                    <td className={`border-b-2 border-black px-4 py-3 font-bold ${p.type === 'Allocation' ? 'text-green-600' : 'text-red-600'}`}>
+                                                    <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-3 font-semibold">{new Date(p.date).toLocaleDateString()}</td>
+                                                    <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-3 font-semibold uppercase">{p.title}</td>
+                                                    <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-3 font-semibold uppercase">{p.type}</td>
+                                                    <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-3 font-semibold uppercase">{p.loggedBy}</td>
+                                                    <td className={`border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-3 font-bold ${p.type === 'Allocation' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                                         ₹ {p.amount.toLocaleString('en-IN')}
                                                     </td>
                                                 </tr>
@@ -1606,18 +1671,18 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                                             return pDate >= reportFromDate && pDate <= reportToDate;
                                         }).length) }).map((_, i) => (
                                             <tr key={`empty-${i}`}>
-                                                <td className="border-r-2 border-b-2 border-black px-4 py-6"></td>
-                                                <td className="border-r-2 border-b-2 border-black px-4 py-6"></td>
-                                                <td className="border-r-2 border-b-2 border-black px-4 py-6"></td>
-                                                <td className="border-r-2 border-b-2 border-black px-4 py-6"></td>
-                                                <td className="border-b-2 border-black px-4 py-6"></td>
+                                                <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-6"></td>
+                                                <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-6"></td>
+                                                <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-6"></td>
+                                                <td className="border-r-2 border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-6"></td>
+                                                <td className="border-b-2 border-black dark:border-gray-800 print:border-black px-4 py-6"></td>
                                             </tr>
                                         ))}
                                     </tbody>
                                     <tfoot>
                                         <tr>
-                                            <td className="border-r-2 border-t-2 border-black px-4 py-4 uppercase font-bold text-right" colSpan={4}>Net Balance In Period</td>
-                                            <td className="border-t-2 border-black px-4 py-4 font-bold text-lg text-blue-600">
+                                            <td className="border-r-2 border-t-2 border-black dark:border-gray-800 print:border-black px-4 py-4 uppercase font-bold text-right" colSpan={4}>Net Balance In Period</td>
+                                            <td className="border-t-2 border-black dark:border-gray-800 print:border-black px-4 py-4 font-bold text-lg text-blue-600 dark:text-blue-400">
                                                 ₹ {pettyCashTransactions.filter(p => {
                                                     const pDate = new Date(p.date).toISOString().split('T')[0];
                                                     return pDate >= reportFromDate && pDate <= reportToDate;
@@ -1637,24 +1702,24 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                 <div className="flex flex-col gap-6">
                     {/* Materials Summary Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Total Materials</span>
-                            <div className="text-4xl font-bold text-white leading-none">{materials.length}</div>
+                            <div className="text-4xl font-bold text-foreground dark:text-white leading-none">{materials.length}</div>
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-primary">All Requests</span>
                         </div>
-                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Approved</span>
-                            <div className="text-4xl font-bold text-white leading-none">{materials.filter(m => m.status === 'Approved').length}</div>
+                            <div className="text-4xl font-bold text-foreground dark:text-white leading-none">{materials.filter(m => m.status === 'Approved').length}</div>
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-green-500">Approved Items</span>
                         </div>
-                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Pending Approval</span>
-                            <div className="text-4xl font-bold text-white leading-none">{materials.filter(m => m.status === 'Pending').length}</div>
+                            <div className="text-4xl font-bold text-foreground dark:text-white leading-none">{materials.filter(m => m.status === 'Pending').length}</div>
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-yellow-500">Awaiting Manager</span>
                         </div>
-                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Refund Requests</span>
-                            <div className="text-4xl font-bold text-white leading-none">{refundRequests.length}</div>
+                            <div className="text-4xl font-bold text-foreground dark:text-white leading-none">{refundRequests.length}</div>
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-orange-500">Stock Returns</span>
                         </div>
                     </div>
@@ -1753,7 +1818,7 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                                                         <div className="flex items-center justify-end gap-3">
                                                             <button 
                                                                 onClick={() => handleDeleteMaterial(m._id)}
-                                                                className="text-xs font-bold text-red-500 hover:text-red-400 transition-colors flex items-center gap-1"
+                                                                className="p-1 px-2 bg-zinc-200 text-red-600 text-[10px] font-bold rounded hover:bg-zinc-300 border border-zinc-300 transition-colors uppercase flex items-center gap-1"
                                                                 title="Delete Material"
                                                             >
                                                                 <Trash2 size={14} /> Delete
@@ -1792,11 +1857,7 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                                                 <td className="px-4 py-3 text-muted text-xs max-w-[200px] truncate" title={req.reason}>{req.reason}</td>
                                                 <td className="px-4 py-3 text-muted text-xs">{new Date(req.createdAt).toLocaleDateString()}</td>
                                                 <td className="px-4 py-3">
-                                                    <span className={`px-2 py-0.5 rounded-lg text-xs font-medium border ${
-                                                        req.status === 'Approved' ? 'bg-success/10 text-success border-success/20' :
-                                                        req.status === 'Rejected' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
-                                                        'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
-                                                    }`}>
+                                                    <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950`}>
                                                         {req.status}
                                                     </span>
                                                 </td>
@@ -1835,7 +1896,7 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                                                                         console.error("Failed to delete refund request:", err);
                                                                     }
                                                                 }}
-                                                                className="p-1 px-2 bg-red-500/10 text-red-500 text-[10px] font-bold rounded hover:bg-red-500/20 border border-red-500/20 transition-colors uppercase flex items-center gap-1"
+                                                                className="p-1 px-2 bg-zinc-200 text-red-600 text-[10px] font-bold rounded hover:bg-zinc-300 border border-zinc-300 transition-colors uppercase flex items-center gap-1"
                                                                 title="Delete Approved Refund"
                                                             >
                                                                 <Trash2 size={12} /> Delete
@@ -1858,24 +1919,24 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                 <div className="flex flex-col gap-4">
                     {/* Issues Summary Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Total Issues</span>
-                            <div className="text-4xl font-bold text-white leading-none">{issues.length}</div>
+                            <div className="text-4xl font-bold text-foreground dark:text-white leading-none">{(issues || []).length}</div>
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-primary">Reported Issues</span>
                         </div>
-                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Critical</span>
-                            <div className="text-4xl font-bold text-white leading-none">{issues.filter(i => i.priority === 'Critical').length}</div>
+                            <div className="text-4xl font-bold text-foreground dark:text-white leading-none">{(issues || []).filter(i => i.priority === 'Critical').length}</div>
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-red-500">High Priority</span>
                         </div>
-                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">In Progress</span>
-                            <div className="text-4xl font-bold text-white leading-none">{issues.filter(i => i.status === 'In Progress').length}</div>
+                            <div className="text-4xl font-bold text-foreground dark:text-white leading-none">{(issues || []).filter(i => i.status === 'In Progress').length}</div>
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-500">Being Fixed</span>
                         </div>
-                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
+                        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Resolved</span>
-                            <div className="text-4xl font-bold text-white leading-none">{issues.filter(i => i.status === 'Resolved').length}</div>
+                            <div className="text-4xl font-bold text-foreground dark:text-white leading-none">{(issues || []).filter(i => i.status === 'Resolved').length}</div>
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-green-500">Fixed Issues</span>
                         </div>
                     </div>
@@ -1893,7 +1954,7 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                     </div>
                     <div className="overflow-x-auto rounded-xl border border-gray-700 bg-panel shadow-sm">
                         <table className="w-full text-left text-sm">
-                            <thead className="bg-surface text-muted border-b border-gray-700">
+                        <thead className="bg-surface border-b border-gray-700">
                                 <tr>
                                     <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Title</th>
                                     <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Description</th>
@@ -1904,7 +1965,7 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-700">
-                                {issues.length === 0 ? (
+                                {(!issues || issues.length === 0) ? (
                                     <tr><td colSpan={5} className="px-6 py-8 text-center text-muted">No issues reported for this site.</td></tr>
                                 ) : (
                                     issues.map(i => (
@@ -1917,51 +1978,96 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                                                 )}
                                             </td>
                                             <td className="px-4 py-3">
-                                                <span className={`px-2 py-0.5 rounded-lg text-xs font-medium border ${
-                                                    i.priority === 'Critical' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
-                                                    i.priority === 'High' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' :
-                                                    i.priority === 'Medium' ? 'bg-primary/10 text-primary border-primary/20' :
-                                                    'bg-surface text-muted border-gray-700'
-                                                }`}>
+                                                <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950`}>
                                                     {i.priority}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3">
-                                                {isSiteEngineer || isProjectManager ? (
-                                                    <select
-                                                        value={i.status}
-                                                        onChange={(e) => handleUpdateIssueStatus(i._id, e.target.value)}
-                                                        className={`px-2 py-1 rounded-lg text-xs font-medium border appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary ${
-                                                            i.status === 'Open' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                                            i.status === 'In Progress' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                                            'bg-success/10 text-success border-success/20'
-                                                        }`}
-                                                    >
-                                                        <option value="Open" className="bg-panel text-foreground">Open</option>
-                                                        <option value="In Progress" className="bg-panel text-foreground">In Progress</option>
-                                                        <option value="Resolved" className="bg-panel text-foreground">Resolved</option>
-                                                    </select>
-                                                ) : (
-                                                    <span className={`px-2 py-0.5 rounded-lg text-xs font-medium border ${
-                                                        i.status === 'Open' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                                        i.status === 'In Progress' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                                        'bg-success/10 text-success border-success/20'
-                                                    }`}>
-                                                        {i.status}
-                                                    </span>
+                                            <td className="px-4 py-3 relative group/status">
+                                                <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950 cursor-help`}>
+                                                    {i.status}
+                                                </span>
+                                                {(i.statusChangedBy || i.resolvedBy || i.raisedBy) && (
+                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/status:block z-50 min-w-[200px] pointer-events-none transition-all animate-in fade-in slide-in-from-bottom-2 duration-200">
+                                                        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.2)] text-[11px] space-y-3 relative">
+                                                            {i.statusChangedBy ? (
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span className="text-slate-500 dark:text-slate-400 uppercase text-[9px] font-bold tracking-wider">Last Status Update</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="text-slate-900 dark:text-white font-bold">{i.statusChangedBy}</span>
+                                                                        {i.statusChangedByRole && (
+                                                                            <span className="px-1.5 py-0.5 rounded-md bg-zinc-200 text-zinc-950 text-[9px] font-bold border border-zinc-200/50">
+                                                                                {i.statusChangedByRole}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            ) : i.raisedBy ? (
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span className="text-slate-500 dark:text-slate-400 uppercase text-[9px] font-bold tracking-wider">Issue Reported By</span>
+                                                                    <div className="flex items-center gap-2 text-[11px]">
+                                                                        <span className="text-slate-900 dark:text-white font-bold">{i.raisedBy}</span>
+                                                                        <span className="px-1.5 py-0.5 rounded-md bg-zinc-200 text-zinc-950 text-[9px] font-bold border border-zinc-200/50">
+                                                                            Reporter
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            ) : null}
+
+
+
+
+
+
+                                                            {i.status === 'Resolved' && i.resolvedBy && (
+                                                                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-1">
+                                                                    <span className="text-emerald-600 dark:text-emerald-400 block uppercase text-[9px] font-bold tracking-wider">Final Resolution By</span>
+                                                                    <div className="flex items-center gap-2 text-[11px]">
+                                                                        <span className="text-slate-900 dark:text-white font-bold">{i.resolvedBy}</span>
+                                                                        <span className="px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9px] font-bold border border-emerald-100 dark:border-emerald-500/20">
+                                                                            Resolver
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
+
+
+
+
+                                                        </div>
+                                                        <div className="w-2.5 h-2.5 bg-white dark:bg-slate-900 border-r border-b border-slate-200 dark:border-slate-800 rotate-45 mx-auto -mt-1.5 shadow-sm"></div>
+                                                    </div>
                                                 )}
                                             </td>
                                             <td className="px-4 py-3 text-muted text-xs">{new Date(i.createdAt).toLocaleDateString()}</td>
                                             <td className="px-4 py-3 text-right">
-                                                {(i.raisedBy === userName || isProjectManager) && (
-                                                    <button 
-                                                        onClick={() => handleDeleteIssue(i._id)}
-                                                        className="text-red-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-red-500/10"
-                                                        title="Delete Issue"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                )}
+                                                <div className="flex items-center justify-end gap-2">
+                                            <select
+                                                value={i.status}
+                                                onChange={(e) => handleUpdateIssueStatus(i._id, e.target.value as Issue['status'])}
+                                                className="px-4 py-2 rounded-xl text-[10px] font-bold border border-amber-500/50 bg-white dark:bg-[#0B0D11] text-gray-900 dark:text-white uppercase tracking-widest focus:outline-none appearance-none cursor-pointer pr-10 min-w-[140px] shadow-sm transition-all hover:shadow-md dark:hover:border-amber-500"
+                                                style={{
+                                                    backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FFB800' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
+                                                    backgroundRepeat: 'no-repeat',
+                                                    backgroundPosition: 'right 0.8rem center',
+                                                    backgroundSize: '0.8em'
+                                                }}
+                                            >
+                                                <option value="Open" className="bg-white dark:bg-[#0B0D11] text-gray-900 dark:text-white">OPEN</option>
+                                                <option value="In Progress" className="bg-white dark:bg-[#0B0D11] text-gray-900 dark:text-white">IN PROGRESS</option>
+                                                <option value="Pending" className="bg-white dark:bg-[#0B0D11] text-gray-900 dark:text-white">PENDING</option>
+                                                <option value="Resolved" className="bg-white dark:bg-[#0B0D11] text-gray-900 dark:text-white">RESOLVED</option>
+                                            </select>
+                                                    {(i.raisedBy === userName || isProjectManager || isHRManager || isAccountant) && (
+                                                        <button 
+                                                            onClick={() => handleDeleteIssue(i._id)}
+                                                            className="text-red-400 hover:text-red-500 transition-colors p-1.5 rounded-lg border border-transparent hover:border-red-500/30 hover:bg-red-500/10"
+                                                            title="Delete Issue"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
@@ -1977,24 +2083,24 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                 <div className="flex flex-col gap-6">
                     {/* Summary Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
-                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Total Allocated</span>
-                            <div className="text-4xl font-bold text-white leading-none font-mono">₹{(pettyCashSummary?.allocated || 0).toLocaleString('en-IN')}</div>
+                        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/60 dark:text-muted-foreground/40">Total Allocated</span>
+                            <div className="text-4xl font-bold text-foreground dark:text-white leading-none font-mono">₹{(pettyCashSummary?.allocated || 0).toLocaleString('en-IN')}</div>
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-primary">Funds assigned</span>
                         </div>
-                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
-                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Total Spent</span>
-                            <div className="text-4xl font-bold text-white leading-none font-mono">₹{(pettyCashSummary?.spent || 0).toLocaleString('en-IN')}</div>
+                        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/60 dark:text-muted-foreground/40">Total Spent</span>
+                            <div className="text-4xl font-bold text-foreground dark:text-white leading-none font-mono">₹{(pettyCashSummary?.spent || 0).toLocaleString('en-IN')}</div>
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-orange-500">Total expense</span>
                         </div>
-                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
-                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Current Balance</span>
-                            <div className={`text-4xl font-bold font-mono leading-none ${(pettyCashSummary?.balance || 0) < 0 ? 'text-red-500' : 'text-white'}`}>₹{(pettyCashSummary?.balance || 0).toLocaleString('en-IN')}</div>
+                        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/60 dark:text-muted-foreground/40">Current Balance</span>
+                            <div className={`text-4xl font-bold font-mono leading-none ${(pettyCashSummary?.balance || 0) < 0 ? 'text-red-500' : 'text-foreground dark:text-white'}`}>₹{(pettyCashSummary?.balance || 0).toLocaleString('en-IN')}</div>
                             <span className={`text-[10px] uppercase tracking-[0.2em] font-bold ${(pettyCashSummary?.balance || 0) < 0 ? 'text-red-500' : 'text-green-500'}`}>Remaining allocation</span>
                         </div>
-                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-700/50">
-                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Total Transactions</span>
-                            <div className="text-4xl font-bold text-white leading-none font-mono">{pettyCashTransactions.length}</div>
+                        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0B0D11] p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/60 dark:text-muted-foreground/40">Total Transactions</span>
+                            <div className="text-4xl font-bold text-foreground dark:text-white leading-none font-mono">{pettyCashTransactions.length}</div>
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-500">Recorded logs</span>
                         </div>
                     </div>
@@ -2060,104 +2166,69 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
             )}
 
             {/* TAB: STAFF ATTENDANCE */}
-            {!tabLoading && activeTab === "Staff Attendance" && (() => {
-                const allRecords = [...engineerAttendance, ...labourAttendance];
-                const approvedCount = allRecords.filter(r => r.approvalStatus === 'approved').length;
-                const pendingCount = allRecords.filter(r => r.approvalStatus === 'pending').length;
-                const rejectedCount = allRecords.filter(r => r.approvalStatus === 'rejected').length;
-
-                const filteredEngineers = attendanceStatusFilter === 'all'
-                    ? engineerAttendance
-                    : engineerAttendance.filter(r => r.approvalStatus === attendanceStatusFilter);
-                const filteredLabours = attendanceStatusFilter === 'all'
-                    ? labourAttendance
-                    : labourAttendance.filter(r => r.approvalStatus === attendanceStatusFilter);
-
-                return (
+            {!tabLoading && activeTab === "Staff Attendance" && (
                 <div className="flex flex-col gap-6">
                     {/* Summary Stat Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-                        <button
-                            onClick={() => setAttendanceStatusFilter('all')}
-                            className={`p-6 rounded-2xl border transition-all flex flex-col justify-between min-h-[150px] text-left ${
-                                attendanceStatusFilter === 'all' ? "border-blue-500 bg-blue-500/5 ring-1 ring-blue-500/20 shadow-lg shadow-blue-500/5" : "border-gray-800 bg-[#0B0D11] hover:border-gray-700/50"
-                            }`}
-                        >
-                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">All Records</span>
-                            <div className="text-4xl font-bold text-white leading-none">{allRecords.length}</div>
+                        <div className="p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0B0D11] shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/60 dark:text-muted-foreground/40">All Records</span>
+                            <div className="text-4xl font-bold text-foreground dark:text-white leading-none">{allStaffRecords.length}</div>
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-500">History</span>
-                        </button>
-                        <button
-                            onClick={() => setAttendanceStatusFilter(attendanceStatusFilter === 'approved' ? 'all' : 'approved')}
-                            className={`p-6 rounded-2xl border transition-all flex flex-col justify-between min-h-[150px] text-left ${
-                                attendanceStatusFilter === 'approved' ? "border-green-500 bg-green-500/5 ring-1 ring-green-500/20 shadow-lg shadow-green-500/5" : "border-gray-800 bg-[#0B0D11] hover:border-gray-700/50"
-                            }`}
-                        >
+                        </div>
+                        <div className="p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0B0D11] shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Approved</span>
-                            <div className="text-4xl font-bold text-white leading-none">{approvedCount}</div>
+                            <div className="text-4xl font-bold text-foreground dark:text-white leading-none">{staffApprovedCount}</div>
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-green-500">Verified</span>
-                        </button>
-                        <button
-                            onClick={() => setAttendanceStatusFilter(attendanceStatusFilter === 'pending' ? 'all' : 'pending')}
-                            className={`p-6 rounded-2xl border transition-all flex flex-col justify-between min-h-[150px] text-left ${
-                                attendanceStatusFilter === 'pending' ? "border-yellow-500 bg-yellow-500/5 ring-1 ring-yellow-500/20 shadow-lg shadow-yellow-500/5" : "border-gray-800 bg-[#0B0D11] hover:border-gray-700/50"
-                            }`}
-                        >
+                        </div>
+                        <div className="p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0B0D11] shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Pending</span>
-                            <div className="text-4xl font-bold text-white leading-none">{pendingCount}</div>
+                            <div className="text-4xl font-bold text-foreground dark:text-white leading-none">{staffPendingCount}</div>
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-yellow-500">Awaiting Approval</span>
-                        </button>
-                        <button
-                            onClick={() => setAttendanceStatusFilter(attendanceStatusFilter === 'rejected' ? 'all' : 'rejected')}
-                            className={`p-6 rounded-2xl border transition-all flex flex-col justify-between min-h-[150px] text-left ${
-                                attendanceStatusFilter === 'rejected' ? "border-red-500 bg-red-500/5 ring-1 ring-red-500/20 shadow-lg shadow-red-500/5" : "border-gray-800 bg-[#0B0D11] hover:border-gray-700/50"
-                            }`}
-                        >
+                        </div>
+                        <div className="p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0B0D11] shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Rejected</span>
-                            <div className="text-4xl font-bold text-white leading-none">{rejectedCount}</div>
+                            <div className="text-4xl font-bold text-foreground dark:text-white leading-none">{staffRejectedCount}</div>
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-red-500">Declined</span>
-                        </button>
+                        </div>
                     </div>
 
-                    {/* Filter Bar */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 bg-panel border border-gray-700 p-4 rounded-xl">
-                        <div className="flex items-center gap-2 text-sm text-primary font-semibold">
-                            <Filter size={16} />
-                            Filters
-                        </div>
-                        <div className="flex flex-col gap-1">
-                            <label className="text-xs text-muted uppercase tracking-wider font-semibold">From</label>
-                            <input
-                                type="date"
-                                value={attendanceFromDate}
-                                onChange={e => setAttendanceFromDate(e.target.value)}
-                                className="rounded-lg border border-gray-700 bg-surface px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-                            />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                            <label className="text-xs text-muted uppercase tracking-wider font-semibold">To</label>
-                            <input
-                                type="date"
-                                value={attendanceToDate}
-                                onChange={e => setAttendanceToDate(e.target.value)}
-                                className="rounded-lg border border-gray-700 bg-surface px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-                            />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                            <label className="text-xs text-muted uppercase tracking-wider font-semibold">Status</label>
-                            <select
-                                value={attendanceStatusFilter}
-                                onChange={e => setAttendanceStatusFilter(e.target.value as any)}
-                                className="rounded-lg border border-gray-700 bg-surface px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none appearance-none cursor-pointer min-w-[120px]"
-                            >
-                                <option value="all">All Status</option>
-                                <option value="approved">Approved</option>
-                                <option value="pending">Pending</option>
-                                <option value="rejected">Rejected</option>
-                            </select>
-                        </div>
-                        <div className="text-xs text-muted mt-1 sm:mt-0">
-                            Showing {filteredEngineers.length + filteredLabours.length} of {allRecords.length} records
+                    {/* Staff Attendance Filter Bar */}
+                    <div className="bg-panel rounded-2xl border border-gray-700 p-4">
+                        <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+                            <div className="flex items-center gap-4 w-full lg:w-auto">
+                                <div className="relative flex-1 lg:w-64">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                                    <input 
+                                        type="text" 
+                                        placeholder="SEARCH REGISTRY..."
+                                        className="w-full bg-surface border border-gray-700 rounded-xl pl-10 pr-4 py-2 text-xs font-bold text-foreground placeholder:text-muted focus:outline-none focus:border-primary transition-all tracking-widest uppercase"
+                                    />
+                                </div>
+                                
+                                <div className="relative group lg:w-48">
+                                    <Layers size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+                                    <select 
+                                        className="w-full bg-surface border border-gray-700 rounded-xl pl-9 pr-8 py-2 text-[10px] font-bold text-foreground focus:outline-none focus:border-primary appearance-none cursor-pointer tracking-widest uppercase"
+                                    >
+                                        <option value="All">All Categories</option>
+                                        <option value="Engineers">Engineers</option>
+                                        <option value="Labours">Labours</option>
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-muted pointer-events-none" />
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3 w-full lg:w-auto overflow-x-auto pb-1 lg:pb-0">
+                                {["All", "Pending", "Approved", "Rejected"].map((status) => (
+                                    <button 
+                                        key={status}
+                                        onClick={() => setAttendanceStatusFilter(status.toLowerCase() as any)}
+                                        className={`whitespace-nowrap px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${attendanceStatusFilter === status.toLowerCase() ? 'bg-primary text-black shadow-lg shadow-primary/10' : 'bg-surface text-muted border border-gray-700 hover:border-gray-600'}`}
+                                    >
+                                        {status}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
 
@@ -2193,122 +2264,217 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-700">
-                                    {filteredEngineers.length === 0 ? (
+                                    {filteredStaffEngineers.length === 0 ? (
                                         <tr><td colSpan={7} className="px-6 py-8 text-center text-muted">No engineer attendance records found for this date range.</td></tr>
                                     ) : (
-                                        filteredEngineers.map(record => (
-                                            <>
-                                                <tr
-                                                    key={record._id}
-                                                    className="hover:bg-surface/50 transition-colors"
-                                                >
-                                                    <td className="px-4 py-3 font-medium text-foreground">{record.employeeName}</td>
-                                                    <td className="px-4 py-3 text-muted">{new Date(record.checkInTime).toLocaleDateString()}</td>
-                                                    <td className="px-4 py-3">
+                                        filteredStaffEngineers.map(record => (
+                                            <tr key={record._id} className="hover:bg-surface/50 transition-colors">
+                                                <td className="px-4 py-3 font-medium text-foreground">{record.employeeName}</td>
+                                                <td className="px-4 py-3 text-muted">{new Date(record.checkInTime).toLocaleDateString()}</td>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex items-center gap-2">
+                                                        {record.inTimePhoto && (
+                                                            <button onClick={(e) => { e.stopPropagation(); openPhotoViewer(record._id, 'in', filteredStaffEngineers); }} className="relative group shrink-0">
+                                                                <img src={record.inTimePhoto} alt="Check-In" className="w-8 h-8 rounded-full border border-primary/50 object-cover" />
+                                                                <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    <Camera size={12} className="text-white" />
+                                                                </div>
+                                                            </button>
+                                                        )}
+                                                        <span className="flex flex-col gap-1">
+                                                            <span className="flex items-center gap-1 text-primary">
+                                                                <Clock size={13} />
+                                                                {new Date(record.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </span>
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 text-muted">
+                                                    {record.checkOutTime ? (
                                                         <div className="flex items-center gap-2">
-                                                            {record.inTimePhoto && (
-                                                                <button onClick={(e) => { e.stopPropagation(); openPhotoViewer(record._id, 'in', filteredEngineers); }} className="relative group shrink-0">
-                                                                    <img src={record.inTimePhoto} alt="Check-In" className="w-8 h-8 rounded-full border border-primary/50 object-cover" />
+                                                            {record.outTimePhoto && (
+                                                                <button onClick={(e) => { e.stopPropagation(); openPhotoViewer(record._id, 'out', filteredStaffEngineers); }} className="relative group shrink-0">
+                                                                    <img src={record.outTimePhoto} alt="Check-Out" className="w-8 h-8 rounded-full border border-gray-500 object-cover" />
                                                                     <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                                                         <Camera size={12} className="text-white" />
                                                                     </div>
                                                                 </button>
                                                             )}
                                                             <span className="flex flex-col gap-1">
-                                                                <span className="flex items-center gap-1 text-primary">
+                                                                <span className="flex items-center gap-1 text-muted">
                                                                     <Clock size={13} />
-                                                                    {new Date(record.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                    {new Date(record.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                                 </span>
-                                                                {record.location && record.location.latitude && (
-                                                                    <span className="text-[10px] text-muted truncate max-w-[120px] flex items-center gap-1" title={record.location.address}>
-                                                                        <MapPin size={10} /> {record.location.address || 'Geo-tagged'}
-                                                                    </span>
-                                                                )}
                                                             </span>
                                                         </div>
-                                                    </td>
-                                                    <td className="px-4 py-3 text-muted">
-                                                        {record.checkOutTime ? (
-                                                            <div className="flex items-center gap-2">
-                                                                {record.outTimePhoto && (
-                                                                    <button onClick={(e) => { e.stopPropagation(); openPhotoViewer(record._id, 'out', filteredEngineers); }} className="relative group shrink-0">
-                                                                        <img src={record.outTimePhoto} alt="Check-Out" className="w-8 h-8 rounded-full border border-gray-500 object-cover" />
-                                                                        <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                            <Camera size={12} className="text-white" />
-                                                                        </div>
-                                                                    </button>
-                                                                )}
-                                                                <span className="flex flex-col gap-1">
-                                                                    <span className="flex items-center gap-1 text-muted">
-                                                                        <Clock size={13} />
-                                                                        {new Date(record.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                                    </span>
-                                                                    {record.location && record.location.latitude && (
-                                                                        <span className="text-[10px] text-muted truncate max-w-[120px] flex items-center gap-1">
-                                                                            <MapPin size={10} /> Recorded
-                                                                        </span>
-                                                                    )}
-                                                                </span>
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-blue-400 italic">Active</span>
+                                                    ) : (
+                                                        <span className="text-blue-400 italic">Active</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3 font-mono font-medium text-foreground">
+                                                    {record.totalHours ? `${record.totalHours.toFixed(1)}h` : '—'}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <span className="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950">
+                                                        {record.approvalStatus.charAt(0).toUpperCase() + record.approvalStatus.slice(1)}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        {record.approvalStatus === 'pending' && (isProjectManager || isHRManager) && (
+                                                            <>
+                                                                <button 
+                                                                    onClick={(e) => { e.stopPropagation(); handleConfirmAttendance(record._id, 'approve'); }}
+                                                                    disabled={isSubmittingAttendance}
+                                                                    className="p-1.5 hover:bg-green-500/10 rounded-lg text-green-400 transition-colors"
+                                                                    title="Approve"
+                                                                >
+                                                                    <CheckCircle size={16} />
+                                                                </button>
+                                                                <button 
+                                                                    onClick={(e) => { e.stopPropagation(); handleConfirmAttendance(record._id, 'reject'); }}
+                                                                    disabled={isSubmittingAttendance}
+                                                                    className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-400 transition-colors"
+                                                                    title="Reject"
+                                                                >
+                                                                    <XCircle size={16} />
+                                                                </button>
+                                                            </>
                                                         )}
-                                                    </td>
-                                                    <td className="px-4 py-3 font-mono font-medium text-foreground">
-                                                        {record.totalHours ? `${record.totalHours.toFixed(1)}h` : '—'}
-                                                    </td>
-                                                    <td className="px-4 py-3">
-                                                        <span className={`px-2 py-0.5 rounded-lg text-xs font-medium border ${
-                                                            record.approvalStatus === 'approved' ? 'bg-primary/10 text-primary border-primary/20' :
-                                                            record.approvalStatus === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                                            'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-                                                        }`}>
-                                                            {record.approvalStatus.charAt(0).toUpperCase() + record.approvalStatus.slice(1)}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-4 py-3 text-right">
-                                                        <div className="flex items-center justify-end gap-1">
-                                                            {record.approvalStatus === 'pending' && (isProjectManager || isHRManager) && (
-                                                                <>
-                                                                    <button 
-                                                                        onClick={(e) => { e.stopPropagation(); handleConfirmAttendance(record._id, 'approve'); }}
-                                                                        disabled={isSubmittingAttendance}
-                                                                        className="p-1.5 hover:bg-green-500/10 rounded-lg text-green-400 transition-colors"
-                                                                        title="Approve"
-                                                                    >
-                                                                        <CheckCircle size={16} />
-                                                                    </button>
-                                                                    <button 
-                                                                        onClick={(e) => { e.stopPropagation(); handleConfirmAttendance(record._id, 'reject'); }}
-                                                                        disabled={isSubmittingAttendance}
-                                                                        className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-400 transition-colors"
-                                                                        title="Reject"
-                                                                    >
-                                                                        <XCircle size={16} />
-                                                                    </button>
-                                                                </>
-                                                            )}
-                                                            <button 
-                                                                onClick={(e) => { e.stopPropagation(); handleDeleteAttendance(record._id); }}
-                                                                disabled={isSubmittingAttendance}
-                                                                className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-400 transition-colors"
-                                                                title="Delete record"
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            </>
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); handleDeleteAttendance(record._id); }}
+                                                            disabled={isSubmittingAttendance}
+                                                            className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-400 transition-colors"
+                                                            title="Delete record"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
                                         ))
                                     )}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+
+                    {/* Labour attendance */}
+                    <div className="flex flex-col gap-3">
+                        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                            Labours Attendance
+                        </h2>
+                        <div className="overflow-x-auto rounded-xl border border-gray-700 bg-panel shadow-sm">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-surface text-muted border-b border-gray-700">
+                                    <tr>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Name</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Date</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Check-In</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Check-Out</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Hours</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Status</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-700">
+                                    {filteredStaffLabours.length === 0 ? (
+                                        <tr><td colSpan={7} className="px-6 py-8 text-center text-muted">No labour attendance records found.</td></tr>
+                                    ) : (
+                                        filteredStaffLabours.map(record => (
+                                            <tr key={record._id} className="hover:bg-surface/50 transition-colors">
+                                                <td className="px-4 py-3 font-medium text-foreground">{record.employeeName}</td>
+                                                <td className="px-4 py-3 text-muted">{new Date(record.checkInTime).toLocaleDateString()}</td>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex items-center gap-2">
+                                                        {record.inTimePhoto && (
+                                                            <button onClick={(e) => { e.stopPropagation(); openPhotoViewer(record._id, 'in', filteredStaffLabours); }} className="relative group shrink-0">
+                                                                <img src={record.inTimePhoto} alt="Check-In" className="w-8 h-8 rounded-full border border-primary/50 object-cover" />
+                                                                <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    <Camera size={12} className="text-white" />
+                                                                </div>
+                                                            </button>
+                                                        )}
+                                                        <span className="flex flex-col gap-1">
+                                                            <span className="flex items-center gap-1 text-primary">
+                                                                <Clock size={13} />
+                                                                {new Date(record.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </span>
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 text-muted">
+                                                    {record.checkOutTime ? (
+                                                        <div className="flex items-center gap-2">
+                                                            {record.outTimePhoto && (
+                                                                <button onClick={(e) => { e.stopPropagation(); openPhotoViewer(record._id, 'out', filteredStaffLabours); }} className="relative group shrink-0">
+                                                                    <img src={record.outTimePhoto} alt="Check-Out" className="w-8 h-8 rounded-full border border-gray-500 object-cover" />
+                                                                    <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                        <Camera size={12} className="text-white" />
+                                                                    </div>
+                                                                </button>
+                                                            )}
+                                                            <span className="flex flex-col gap-1">
+                                                                <span className="flex items-center gap-1 text-muted">
+                                                                    <Clock size={13} />
+                                                                    {new Date(record.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                </span>
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-blue-400 italic">Active</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3 font-mono font-medium text-foreground">
+                                                    {record.totalHours ? `${record.totalHours.toFixed(1)}h` : '—'}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <span className="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950">
+                                                        {record.approvalStatus.charAt(0).toUpperCase() + record.approvalStatus.slice(1)}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        {record.approvalStatus === 'pending' && (isProjectManager || isHRManager) && (
+                                                            <>
+                                                                <button 
+                                                                    onClick={(e) => { e.stopPropagation(); handleConfirmAttendance(record._id, 'approve'); }}
+                                                                    disabled={isSubmittingAttendance}
+                                                                    className="p-1.5 hover:bg-green-500/10 rounded-lg text-green-400 transition-colors"
+                                                                    title="Approve"
+                                                                >
+                                                                    <CheckCircle size={16} />
+                                                                </button>
+                                                                <button 
+                                                                    onClick={(e) => { e.stopPropagation(); handleConfirmAttendance(record._id, 'reject'); }}
+                                                                    disabled={isSubmittingAttendance}
+                                                                    className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-400 transition-colors"
+                                                                    title="Reject"
+                                                                >
+                                                                    <XCircle size={16} />
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); handleDeleteAttendance(record._id); }}
+                                                            disabled={isSubmittingAttendance}
+                                                            className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-400 transition-colors"
+                                                            title="Delete record"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-            );
-        })()}
+            )}
+
             {/* --- MODALS --- */}
 
             {/* Log Labour Attendance Modal */}
@@ -2736,8 +2902,7 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
             )}
 
             {/* Modal: Log Attendance with Camera */}
-            {isLogAttendanceOpen && (() => {
-                return (
+            {isLogAttendanceOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                     <div className="w-full max-w-md bg-panel border border-gray-700 rounded-xl shadow-2xl overflow-hidden flex flex-col">
                         <div className="flex items-center justify-between border-b border-gray-700 px-6 py-4 bg-surface">
@@ -2839,8 +3004,7 @@ export default function SiteDetailsPage({ params }: { params: Promise<{ id: stri
                         </div>
                     </div>
                 </div>
-                );
-            })()}
+            )}
 
             {/* Photo Viewer Modal */}
             {photoViewerOpen && currentViewerPhotos.length > 0 && (

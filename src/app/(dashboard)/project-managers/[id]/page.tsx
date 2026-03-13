@@ -259,11 +259,7 @@ export default function ProjectManagerDetailsPage() {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                            <span className={`text-xs px-2.5 py-1 rounded-full border font-semibold ${
-                                                site.status === "Active" ? "bg-green-500/10 text-green-400 border-green-500/20" :
-                                                site.status === "Completed" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
-                                                "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
-                                            }`}>
+                                            <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950`}>
                                                 {site.status}
                                             </span>
                                             <ChevronRight size={16} className="text-muted group-hover:text-primary transition-colors" />
@@ -337,12 +333,12 @@ export default function ProjectManagerDetailsPage() {
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
-                                <thead className="text-muted border-b border-gray-700">
+                                <thead className="bg-surface border-b border-gray-700 text-muted">
                                     <tr>
-                                        <th className="px-4 py-3 font-semibold uppercase tracking-wider">Issue</th>
-                                        <th className="px-4 py-3 font-semibold uppercase tracking-wider text-center">Priority</th>
-                                        <th className="px-4 py-3 font-semibold uppercase tracking-wider text-center">Status</th>
-                                        <th className="px-4 py-3 font-semibold uppercase tracking-wider">Date</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Issue</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-center">Priority</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-center">Status</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Date</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-700">
@@ -357,12 +353,12 @@ export default function ProjectManagerDetailsPage() {
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3 text-center">
-                                                <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold border ${priorityColor(issue.priority)}`}>
+                                                <span className={`inline-flex px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950 px-2.5 py-1 rounded-full text-xs font-semibold border ${priorityColor(issue.priority)}`}>
                                                     {issue.priority}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3 text-center">
-                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${statusColor(issue.status)}`}>
+                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950`}>
                                                     {statusIcon(issue.status)}
                                                     {issue.status}
                                                 </span>

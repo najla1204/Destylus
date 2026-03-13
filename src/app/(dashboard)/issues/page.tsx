@@ -15,6 +15,10 @@ interface Issue {
     siteName: string;
     createdAt: string;
     updatedAt: string;
+    sentTo?: string[];
+    statusChangedBy?: string;
+    statusChangedByRole?: string;
+    resolvedBy?: string;
 }
 
 interface Site {
@@ -26,6 +30,17 @@ export default function IssuesPage() {
     const [issues, setIssues] = useState<Issue[]>([]);
     const [sites, setSites] = useState<Site[]>([]);
     const [loading, setLoading] = useState(true);
+    const [userRole, setUserRole] = useState<string>("");
+    const [userName, setUserName] = useState<string>("");
+
+    useEffect(() => {
+        const userStr = typeof window !== 'undefined' ? localStorage.getItem("user") : null;
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            setUserName(user.name || "");
+            setUserRole(user.role || "");
+        }
+    }, []);
 
     // Filters
     const [searchQuery, setSearchQuery] = useState("");
@@ -96,18 +111,43 @@ export default function IssuesPage() {
     };
 
     const handleStatusChange = async (issueId: string, siteId: string, newStatus: string) => {
+        // Optimistic update
+        const previousIssues = [...issues];
+        const statusChangedBy = userName;
+        const statusChangedByRole = userRole;
+        const resolvedBy = newStatus === 'Resolved' ? userName : undefined;
+
+        setIssues(prev => prev.map(i => i._id === issueId ? { 
+            ...i, 
+            status: newStatus as Issue["status"],
+            statusChangedBy,
+            statusChangedByRole,
+            ...(resolvedBy ? { resolvedBy } : {})
+        } : i));
+
         try {
-            const res = await fetch(`/api/sites/${siteId}/issues`, {
+            const res = await fetch(`/api/issues/${issueId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ issueId, status: newStatus }),
+                body: JSON.stringify({ 
+                    issueId, 
+                    status: newStatus,
+                    statusChangedBy,
+                    statusChangedByRole,
+                    resolvedBy
+                }),
             });
-            if (res.ok) {
-                setIssues(prev =>
-                    prev.map(i => (i._id === issueId ? { ...i, status: newStatus as Issue["status"] } : i))
-                );
+            if (!res.ok) {
+                // Revert if failed
+                setIssues(previousIssues);
+                console.error("API update failed");
+            } else {
+                const updated = await res.json();
+                setIssues(prev => prev.map(i => i._id === issueId ? updated : i));
             }
         } catch (err) {
+            // Revert if error
+            setIssues(previousIssues);
             console.error("Failed to update issue status:", err);
         }
     };
@@ -144,39 +184,30 @@ export default function IssuesPage() {
         <div className="flex flex-col gap-6">
             {/* Stat Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
-                <button
-                    onClick={() => setStatusFilter(statusFilter === "Open" ? "all" : "Open")}
-                    className={`p-6 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between min-h-[150px] text-left ${
-                        statusFilter === "Open" ? "border-red-500 bg-red-500/5 ring-1 ring-red-500/20 shadow-lg shadow-red-500/5" : "border-gray-800 bg-[#0B0D11] hover:border-gray-700/50"
-                    }`}
+                <div
+                    className="p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel transition-all flex flex-col justify-between min-h-[150px] text-left"
                 >
-                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Open Issues</span>
-                    <div className="text-4xl font-bold text-white leading-none">{openCount}</div>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/60 dark:text-muted-foreground/40">Open Issues</span>
+                    <div className="text-4xl font-bold text-foreground leading-none">{openCount}</div>
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-red-500">Needs attention</span>
-                </button>
-                <button
-                    onClick={() => setStatusFilter(statusFilter === "In Progress" ? "all" : "In Progress")}
-                    className={`p-6 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between min-h-[150px] text-left ${
-                        statusFilter === "In Progress" ? "border-blue-500 bg-blue-500/5 ring-1 ring-blue-500/20 shadow-lg shadow-blue-500/5" : "border-gray-800 bg-[#0B0D11] hover:border-gray-700/50"
-                    }`}
+                </div>
+                <div
+                    className="p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel transition-all flex flex-col justify-between min-h-[150px] text-left"
                 >
-                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">In Progress</span>
-                    <div className="text-4xl font-bold text-white leading-none">{inProgressCount}</div>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/60 dark:text-muted-foreground/40">In Progress</span>
+                    <div className="text-4xl font-bold text-foreground leading-none">{inProgressCount}</div>
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-500">Being worked on</span>
-                </button>
-                <button
-                    onClick={() => setStatusFilter(statusFilter === "Resolved" ? "all" : "Resolved")}
-                    className={`p-6 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between min-h-[150px] text-left ${
-                        statusFilter === "Resolved" ? "border-yellow-500 bg-yellow-500/5 ring-1 ring-yellow-500/20 shadow-lg shadow-yellow-500/5" : "border-gray-800 bg-[#0B0D11] hover:border-gray-700/50"
-                    }`}
+                </div>
+                <div
+                    className="p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel transition-all flex flex-col justify-between min-h-[150px] text-left"
                 >
-                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Resolved</span>
-                    <div className="text-4xl font-bold text-white leading-none">{resolvedCount}</div>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/60 dark:text-muted-foreground/40">Resolved</span>
+                    <div className="text-4xl font-bold text-foreground leading-none">{resolvedCount}</div>
                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-yellow-500">Completed</span>
-                </button>
-                <div className={`p-6 rounded-2xl border transition-all flex flex-col justify-between min-h-[150px] ${criticalCount > 0 ? "border-red-500 bg-red-500/5 ring-1 ring-red-500/20 shadow-lg shadow-red-500/5" : "border-gray-800 bg-[#0B0D11]"}`}>
-                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Critical Active</span>
-                    <div className={`text-4xl font-bold leading-none ${criticalCount > 0 ? "text-red-500" : "text-white"}`}>{criticalCount}</div>
+                </div>
+                <div className="p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel transition-all flex flex-col justify-between min-h-[150px]">
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/60 dark:text-muted-foreground/40">Critical Active</span>
+                    <div className={`text-4xl font-bold leading-none ${criticalCount > 0 ? "text-red-500" : "text-foreground"}`}>{criticalCount}</div>
                     <span className={`text-[10px] uppercase tracking-[0.2em] font-bold ${criticalCount > 0 ? "text-red-500" : "text-muted-foreground/60"}`}>
                         {criticalCount > 0 ? "Urgent Action" : "All clear"}
                     </span>
@@ -288,11 +319,7 @@ export default function IssuesPage() {
                                             <div className="flex flex-col gap-0.5">
                                                 <span className="text-foreground text-sm font-medium">{issue.raisedBy}</span>
                                                 {issue.raisedByRole && (
-                                                    <span className={`text-xs px-1.5 py-0.5 rounded w-fit border ${
-                                                        issue.raisedByRole === "Project Manager"
-                                                            ? "bg-orange-500/10 text-orange-400 border-orange-500/20"
-                                                            : "bg-blue-500/10 text-blue-400 border-blue-500/20"
-                                                    }`}>
+                                                    <span className="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950">
                                                         {issue.raisedByRole}
                                                     </span>
                                                 )}
@@ -302,23 +329,56 @@ export default function IssuesPage() {
                                         )}
                                     </td>
                                     <td className="px-4 py-4">
-                                        <span className={`px-2 py-0.5 rounded-lg text-xs font-medium border ${
-                                            issue.priority === "Critical" ? "bg-red-500/10 text-red-500 border-red-500/20" :
-                                            issue.priority === "High" ? "bg-orange-500/10 text-orange-400 border-orange-500/20" :
-                                            issue.priority === "Medium" ? "bg-primary/10 text-primary border-primary/20" :
-                                            "bg-surface text-muted border-gray-700"
-                                        }`}>
+                                        <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950`}>
                                             {issue.priority}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-4">
-                                        <span className={`px-2 py-0.5 rounded-lg text-xs font-medium border ${
-                                            issue.status === "Open" ? "bg-red-500/10 text-red-400 border-red-500/20" :
-                                            issue.status === "In Progress" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
-                                            "bg-primary/10 text-primary border-primary/20"
-                                        }`}>
+                                    <td className="px-4 py-4 relative group/status">
+                                        <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950 cursor-help`}>
                                             {issue.status}
                                         </span>
+                                        {(issue.statusChangedBy || issue.resolvedBy || issue.raisedBy) && (
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/status:block z-50 min-w-[200px] pointer-events-none transition-all animate-in fade-in slide-in-from-bottom-2 duration-200">
+                                                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.2)] text-[11px] space-y-3 relative">
+                                                    {issue.statusChangedBy ? (
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="text-slate-500 dark:text-slate-400 uppercase text-[9px] font-bold tracking-wider">Last Status Update</span>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-slate-900 dark:text-white font-bold">{issue.statusChangedBy}</span>
+                                                                {issue.statusChangedByRole && (
+                                                                    <span className="px-1.5 py-0.5 rounded-md bg-zinc-200 text-zinc-950 text-[9px] font-bold border border-zinc-200/50">
+                                                                        {issue.statusChangedByRole}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ) : issue.raisedBy ? (
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="text-slate-500 dark:text-slate-400 uppercase text-[9px] font-bold tracking-wider">Issue Reported By</span>
+                                                            <div className="flex items-center gap-2 text-[11px]">
+                                                                <span className="text-slate-900 dark:text-white font-bold">{issue.raisedBy}</span>
+                                                                <span className="px-1.5 py-0.5 rounded-md bg-zinc-200 text-zinc-950 text-[9px] font-bold border border-zinc-200/50">
+                                                                    Reporter
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    ) : null}
+
+                                                    {issue.status === "Resolved" && issue.resolvedBy && (
+                                                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-1">
+                                                            <span className="text-emerald-600 dark:text-emerald-400 block uppercase text-[9px] font-bold tracking-wider">Final Resolution By</span>
+                                                            <div className="flex items-center gap-2 text-[11px]">
+                                                                <span className="text-slate-900 dark:text-white font-bold">{issue.resolvedBy}</span>
+                                                                <span className="px-1.5 py-0.5 rounded-md bg-zinc-200 text-zinc-950 text-[9px] font-bold border border-zinc-200/50">
+                                                                    Resolver
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="w-2.5 h-2.5 bg-white dark:bg-slate-900 border-r border-b border-slate-200 dark:border-slate-800 rotate-45 mx-auto -mt-1.5 shadow-sm"></div>
+                                            </div>
+                                        )}
                                     </td>
                                     <td className="px-4 py-4 text-muted text-xs">
                                         {new Date(issue.createdAt).toLocaleDateString()}

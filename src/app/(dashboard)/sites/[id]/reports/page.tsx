@@ -305,12 +305,12 @@ export default function SiteReportsPage({ params }: { params: Promise<{ id: stri
                                         <table className="w-full text-left text-sm">
                                             <thead className="bg-gray-50 border-b border-gray-200">
                                                 <tr>
-                                                    <th className="px-4 py-2 font-semibold text-gray-900">Date</th>
-                                                    <th className="px-4 py-2 font-semibold text-gray-900">Engineer</th>
-                                                    <th className="px-4 py-2 font-semibold text-gray-900 text-right">Labor</th>
-                                                    <th className="px-4 py-2 font-semibold text-gray-900 text-right">Material (Est)</th>
-                                                    <th className="px-4 py-2 font-semibold text-gray-900 text-right">Petty Cash</th>
-                                                    <th className="px-4 py-2 font-semibold text-gray-900 text-right">Total</th>
+                                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Date</th>
+                                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Engineer</th>
+                                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-right">Labor</th>
+                                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-right">Material (Est)</th>
+                                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-right">Petty Cash</th>
+                                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest text-right">Total</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-100">
@@ -341,11 +341,11 @@ export default function SiteReportsPage({ params }: { params: Promise<{ id: stri
                                         <table className="w-full text-left text-sm">
                                             <thead className="bg-gray-50 border-b border-gray-200">
                                                 <tr>
-                                                    <th className="px-4 py-2 font-semibold text-gray-900">Date</th>
-                                                    <th className="px-4 py-2 font-semibold text-gray-900">Material</th>
-                                                    <th className="px-4 py-2 font-semibold text-gray-900">Action</th>
-                                                    <th className="px-4 py-2 font-semibold text-gray-900">Quantity</th>
-                                                    <th className="px-4 py-2 font-semibold text-gray-900">Engineer</th>
+                                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Date</th>
+                                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Material</th>
+                                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Action</th>
+                                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Quantity</th>
+                                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Engineer</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-100">
@@ -378,11 +378,11 @@ export default function SiteReportsPage({ params }: { params: Promise<{ id: stri
                                         <table className="w-full text-left text-sm">
                                             <thead className="bg-gray-50 border-b border-gray-200">
                                                 <tr>
-                                                    <th className="px-4 py-2 font-semibold text-gray-900">Date</th>
-                                                    <th className="px-4 py-2 font-semibold text-gray-900">Severity</th>
-                                                    <th className="px-4 py-2 font-semibold text-gray-900">Description</th>
-                                                    <th className="px-4 py-2 font-semibold text-gray-900">Status</th>
-                                                    <th className="px-4 py-2 font-semibold text-gray-900">Reported By</th>
+                                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Date</th>
+                                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Severity</th>
+                                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Description</th>
+                                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Status</th>
+                                                    <th className="px-6 py-4 text-[10px] font-bold text-muted uppercase tracking-widest">Reported By</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-100">

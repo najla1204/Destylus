@@ -95,19 +95,19 @@ export default function TimesheetPage() {
                     </div>
                     {/* Stats Summary */}
                     <div className="flex gap-4">
-                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-4 shadow-sm flex flex-col justify-between min-w-[140px] transition-all hover:border-gray-700/50">
+                        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-4 shadow-sm flex flex-col justify-between min-w-[140px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Total Hours</span>
-                            <div className="text-2xl font-bold text-white leading-none mt-2">{totalHours}</div>
+                            <div className="text-2xl font-bold text-foreground leading-none mt-2">{totalHours}</div>
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-primary mt-2">Recorded</span>
                         </div>
-                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-4 shadow-sm flex flex-col justify-between min-w-[140px] transition-all hover:border-gray-700/50">
+                        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-4 shadow-sm flex flex-col justify-between min-w-[140px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Days Worked</span>
-                            <div className="text-2xl font-bold text-white leading-none mt-2">{daysWorked}</div>
+                            <div className="text-2xl font-bold text-foreground leading-none mt-2">{daysWorked}</div>
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-green-500 mt-2">Active</span>
                         </div>
-                        <div className="rounded-2xl border border-gray-800 bg-[#0B0D11] p-4 shadow-sm flex flex-col justify-between min-w-[140px] transition-all hover:border-gray-700/50">
+                        <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-4 shadow-sm flex flex-col justify-between min-w-[140px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/40">Leaves</span>
-                            <div className="text-2xl font-bold text-white leading-none mt-2">{leaveDays}</div>
+                            <div className="text-2xl font-bold text-foreground leading-none mt-2">{leaveDays}</div>
                             <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-orange-500 mt-2">Days Off</span>
                         </div>
                     </div>
@@ -155,7 +155,7 @@ export default function TimesheetPage() {
                                 {isLogged ? (
                                     <div className="w-full">
                                         {isLeave ? (
-                                            <span className="inline-block w-full text-center py-1 bg-warning/20 text-warning text-xs rounded font-bold">
+                                            <span className="inline-block w-full text-center py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200/50 bg-zinc-200 text-zinc-950">
                                                 LEAVE
                                             </span>
                                         ) : (
