@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
-    PieChart, Pie, Cell
+    PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
 import { useTheme } from "next-themes";
 import {
@@ -149,6 +149,12 @@ function DashboardContent() {
     const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
     const [workerDistribution, setWorkerDistribution] = useState<any[]>([]);
     const [loadingDistribution, setLoadingDistribution] = useState(false);
+    const [hrStats, setHrStats] = useState({
+        pmCount: 0,
+        siteCount: 0,
+        totalPettyCash: 0,
+        totalEmployees: 0
+    });
 
     useEffect(() => {
         const role = localStorage.getItem("userRole") || "";
@@ -176,12 +182,17 @@ function DashboardContent() {
     useEffect(() => {
         if (userRole === "HR Manager") {
             setLoadingDistribution(true);
-            fetch("/api/hr/worker-distribution")
-                .then(res => res.json())
-                .then(data => {
-                    setWorkerDistribution(Array.isArray(data) ? data : []);
+            Promise.all([
+                fetch("/api/hr/worker-distribution").then(res => res.json()),
+                fetch("/api/hr/stats").then(res => res.json())
+            ])
+                .then(([distData, statsData]) => {
+                    setWorkerDistribution(Array.isArray(distData) ? distData : []);
+                    if (statsData && !statsData.error) {
+                        setHrStats(statsData);
+                    }
                 })
-                .catch(err => console.error("Error fetching worker distribution:", err))
+                .catch(err => console.error("Error fetching HR dashboard data:", err))
                 .finally(() => setLoadingDistribution(false));
         }
     }, [userRole]);
@@ -365,27 +376,27 @@ function DashboardContent() {
                 {/* Premium Stats Grid */}
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
-                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 dark:text-muted-foreground/40">Total Employees</span>
-                        <div className="text-4xl font-bold text-foreground leading-none">{employees.length}</div>
-                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-600 dark:text-blue-500">Active Workforce</span>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 dark:text-muted-foreground/40">Total Project Managers</span>
+                        <div className="text-4xl font-bold text-foreground leading-none">{hrStats.pmCount}</div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-600 dark:text-blue-500">Across All Sites</span>
                     </div>
                     
                     <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
-                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 dark:text-muted-foreground/40">Active Sites</span>
-                        <div className="text-4xl font-bold text-foreground leading-none">{sites.length}</div>
-                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-yellow-600 dark:text-yellow-500">Ongoing Projects</span>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 dark:text-muted-foreground/40">Total Employees</span>
+                        <div className="text-4xl font-bold text-foreground leading-none">{hrStats.totalEmployees}</div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-yellow-600 dark:text-yellow-500">Active Workforce</span>
                     </div>
 
                     <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
-                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 dark:text-muted-foreground/40">Pending Claims</span>
-                        <div className="text-4xl font-bold text-foreground leading-none">8</div>
-                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-red-600 dark:text-red-500">Requires Approval</span>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 dark:text-muted-foreground/40">No. of Sites</span>
+                        <div className="text-4xl font-bold text-foreground leading-none">{hrStats.siteCount}</div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-red-600 dark:text-red-500">Active Projects</span>
                     </div>
 
                     <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-panel p-6 shadow-sm flex flex-col justify-between min-h-[150px] transition-all hover:border-gray-300 dark:hover:border-gray-700/50">
-                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 dark:text-muted-foreground/40">Payroll Status</span>
-                        <div className="text-xl font-bold text-foreground leading-none pt-2 uppercase">Pending</div>
-                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-600 dark:text-muted-foreground/60">For Current Month</span>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 dark:text-muted-foreground/40">Total Petty Cash Allocated</span>
+                        <div className="text-4xl font-bold text-foreground leading-none">₹{(hrStats.totalPettyCash / 100000).toFixed(1)}L</div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-600 dark:text-muted-foreground/60">Across All Sites</span>
                     </div>
                 </div>
 
@@ -411,7 +422,7 @@ function DashboardContent() {
                                             tick={{ fill: '#888', fontSize: 12 }}
                                         />
                                         <YAxis stroke="#888" tick={{ fill: '#888', fontSize: 12 }} />
-                                        <RechartsTooltip content={<CustomChartTooltip />} />
+                                        <RechartsTooltip cursor={false} content={<CustomChartTooltip />} />
                                         <Bar dataKey="count" name="Total Workers" fill="#FFC107" radius={[4, 4, 0, 0]} barSize={40} />
                                     </BarChart>
                                 </ResponsiveContainer>
@@ -769,7 +780,7 @@ function DashboardContent() {
                                         <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#ffffff08' : '#e2e8f0'} vertical={false} />
                                         <XAxis dataKey="date" stroke={theme === 'dark' ? '#ffffff40' : '#94a3b8'} tick={{ fill: theme === 'dark' ? '#ffffff60' : '#64748b', fontSize: 10, fontWeight: 'bold' }} axisLine={false} tickLine={false} dy={10} />
                                         <YAxis stroke={theme === 'dark' ? '#ffffff40' : '#94a3b8'} tick={{ fill: theme === 'dark' ? '#ffffff60' : '#64748b', fontSize: 10, fontWeight: 'bold' }} axisLine={false} tickLine={false} dx={-10} allowDecimals={false} />
-                                        <RechartsTooltip cursor={{ fill: theme === 'dark' ? '#ffffff05' : '#00000005' }} content={<CustomChartTooltip />} />
+                                        <RechartsTooltip cursor={false} content={<CustomChartTooltip />} />
                                         <Legend wrapperStyle={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', paddingTop: '20px' }} iconType="circle" />
                                         <Bar dataKey="Engineers" fill="#3B82F6" radius={[6, 6, 0, 0]} barSize={28} />
                                     </BarChart>
@@ -785,13 +796,27 @@ function DashboardContent() {
                             </div>
                             <div className="flex-1 min-h-0 min-w-0 relative">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={materialsWeeklyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <AreaChart data={materialsWeeklyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                        <defs>
+                                            <linearGradient id="colorQuantity" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
+                                                <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                                            </linearGradient>
+                                        </defs>
                                         <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#ffffff08' : '#e2e8f0'} vertical={false} />
                                         <XAxis dataKey="date" stroke={theme === 'dark' ? '#ffffff40' : '#94a3b8'} tick={{ fill: theme === 'dark' ? '#ffffff60' : '#64748b', fontSize: 10, fontWeight: 'bold' }} axisLine={false} tickLine={false} dy={10} />
                                         <YAxis stroke={theme === 'dark' ? '#ffffff40' : '#94a3b8'} tick={{ fill: theme === 'dark' ? '#ffffff60' : '#64748b', fontSize: 10, fontWeight: 'bold' }} axisLine={false} tickLine={false} dx={-10} allowDecimals={false} />
-                                        <RechartsTooltip cursor={{ fill: theme === 'dark' ? '#ffffff05' : '#00000005' }} content={<CustomChartTooltip />} />
-                                        <Bar dataKey="Quantity" name="Total Materials" fill="#10B981" radius={[6, 6, 0, 0]} barSize={28} />
-                                    </BarChart>
+                                        <RechartsTooltip cursor={false} content={<CustomChartTooltip />} />
+                                        <Area 
+                                            type="monotone" 
+                                            dataKey="Quantity" 
+                                            stroke="#10B981" 
+                                            strokeWidth={3}
+                                            fillOpacity={1} 
+                                            fill="url(#colorQuantity)" 
+                                            activeDot={{ r: 6, strokeWidth: 0, fill: '#10B981' }}
+                                        />
+                                    </AreaChart>
                                 </ResponsiveContainer>
                             </div>
                         </div>
