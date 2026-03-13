@@ -149,6 +149,8 @@ function DashboardContent() {
     const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
     const [workerDistribution, setWorkerDistribution] = useState<any[]>([]);
     const [loadingDistribution, setLoadingDistribution] = useState(false);
+    const [materialUsage, setMaterialUsage] = useState<any[]>([]);
+    const [loadingMaterialUsage, setLoadingMaterialUsage] = useState(false);
 
     useEffect(() => {
         const role = localStorage.getItem("userRole") || "";
@@ -183,6 +185,15 @@ function DashboardContent() {
                 })
                 .catch(err => console.error("Error fetching worker distribution:", err))
                 .finally(() => setLoadingDistribution(false));
+
+            setLoadingMaterialUsage(true);
+            fetch("/api/hr/material-usage")
+                .then(res => res.json())
+                .then(data => {
+                    setMaterialUsage(Array.isArray(data) ? data : []);
+                })
+                .catch(err => console.error("Error fetching material usage:", err))
+                .finally(() => setLoadingMaterialUsage(false));
         }
     }, [userRole]);
 
@@ -352,11 +363,6 @@ function DashboardContent() {
             };
         });
 
-        const budgetData = sites.map(site => ({
-            name: site.name,
-            value: site.budget || 0
-        }));
-
         const COLORS = ['#F59E0B', '#3B82F6', '#10B981', '#EF4444', '#8B5CF6'];
 
         return (
@@ -423,39 +429,38 @@ function DashboardContent() {
                         </div>
                     </div>
 
-                    {/* Graph 2: Budget Distribution */}
+                    {/* Graph 2: Material Usage Overview */}
                     <div className="rounded-2xl bg-panel border border-gray-200 dark:border-gray-800 p-6 shadow-xl transition-all">
                         <div className="mb-6 flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-foreground uppercase tracking-wider">Budget Allocation</h3>
-                            <DollarSign size={18} className="text-[#FFC107]" />
+                            <h3 className="text-lg font-semibold text-foreground uppercase tracking-wider">Material Usage Overview</h3>
+                            <Package size={18} className="text-[#FFC107]" />
                         </div>
-                        <div className="h-[300px] min-w-0 flex items-center justify-center">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={budgetData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={70}
-                                        outerRadius={100}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                    >
-                                        {budgetData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <RechartsTooltip 
-                                        content={<CustomChartTooltip formatter={(value: any) => [`₹${(Number(value)/100000).toFixed(1)}L`, 'Budget']} />}
-                                    />
-                                    <Legend 
-                                        verticalAlign="bottom" 
-                                        height={36} 
-                                        iconType="circle"
-                                        wrapperStyle={{ fontSize: '12px', color: '#888' }}
-                                    />
-                                </PieChart>
-                            </ResponsiveContainer>
+                        <div className="h-[300px] min-w-0">
+                            {loadingMaterialUsage ? (
+                                <div className="flex h-full items-center justify-center">
+                                    <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-primary"></div>
+                                </div>
+                            ) : materialUsage.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={materialUsage} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#333' : '#e2e8f0'} vertical={false} />
+                                        <XAxis 
+                                            dataKey="material" 
+                                            stroke="#888" 
+                                            tick={{ fill: '#888', fontSize: 12 }}
+                                        />
+                                        <YAxis stroke="#888" tick={{ fill: '#888', fontSize: 12 }} />
+                                        <RechartsTooltip 
+                                            content={<CustomChartTooltip formatter={(value: any, name: any, props: any) => [`${value} ${props.payload.unit}`, "Quantity"]} />} 
+                                        />
+                                        <Bar dataKey="quantity" name="Quantity Used" fill="#10B981" radius={[4, 4, 0, 0]} barSize={40} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="flex h-full flex-col items-center justify-center text-center">
+                                    <span className="text-muted text-sm">No material usage data available</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
